@@ -67,22 +67,25 @@ self.addEventListener("push", (event) => {
     data,
     requireInteraction: false,
     vibrate: [200, 100, 200],
-    actions: [
-      {
-        action: "open",
-        title: "Buka",
-        icon: "/icon-open.png",
-      },
-      {
-        action: "close",
-        title: "Tutup",
-        icon: "/icon-close.png",
-      },
-    ],
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, notificationOptions)
+    Promise.all([
+      // Show notification
+      self.registration.showNotification(title, notificationOptions),
+      // Send message to all clients to update notification list
+      self.clients.matchAll({ type: "window" }).then((clientList) => {
+        clientList.forEach((client) => {
+          client.postMessage({
+            type: "NEW_NOTIFICATION",
+            title,
+            body,
+            taskId: data?.taskId,
+            url: data?.url,
+          });
+        });
+      }),
+    ])
   );
 });
 

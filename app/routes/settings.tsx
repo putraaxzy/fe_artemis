@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks";
+import { usePushNotification } from "~/hooks/usePushNotification";
 import { Header, Alert, Button, Input } from "../components";
 import { userService, type User } from "../services/api";
 import {
@@ -11,6 +12,10 @@ import {
   MdCameraAlt,
   MdClose,
   MdWarning,
+  MdNotifications,
+  MdNotificationsActive,
+  MdInstallMobile,
+  MdError,
 } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 
@@ -25,6 +30,21 @@ export default function Settings() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAuthenticated, refreshUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Push notification hook
+  const {
+    isSupported: notifSupported,
+    permission: notifPermission,
+    isSubscribed: notifSubscribed,
+    isLoading: notifLoading,
+    error: notifError,
+    subscribe: notifSubscribe,
+    unsubscribe: notifUnsubscribe,
+  } = usePushNotification();
+
+  // PWA install state
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isPwaInstalled, setIsPwaInstalled] = useState(false);
   
   const [formData, setFormData] = useState({
     username: "",
@@ -41,6 +61,44 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showFirstLoginModal, setShowFirstLoginModal] = useState(false);
+
+  // PWA install prompt listener
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsPwaInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsPwaInstalled(true);
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setIsPwaInstalled(true);
+    }
+    setDeferredPrompt(null);
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -107,11 +165,6 @@ export default function Settings() {
   };
 
   const validateForm = () => {
-    if (!formData.name.trim()) {
-      setError("Nama harus diisi");
-      return false;
-    }
-
     if (formData.username && !/^[a-zA-Z0-9_.]+$/.test(formData.username)) {
       setError("Username hanya boleh huruf, angka, titik, dan underscore");
       return false;
@@ -408,18 +461,18 @@ export default function Settings() {
                 />
               </div>
 
-              {/* Nama */}
+              {/* Nama (Read-only) */}
               <div>
-                <Input
-                  label="nama lengkap"
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  nama lengkap
+                </label>
+                <input
                   type="text"
-                  name="name"
-                  placeholder="Nama lengkap Anda"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={!isEditing || isLoading}
-                  required
+                  value={user.name}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-gray-50 cursor-not-allowed"
                 />
+                <p className="mt-1 text-xs text-gray-500">Nama tidak dapat diubah</p>
               </div>
 
               {/* Kelas dan Jurusan (Read-only) */}
@@ -548,6 +601,119 @@ export default function Settings() {
               )}
             </form>
           </div>
+
+          {/* Notification & App Settings */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">
+                Notifikasi & Aplikasi
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Kelola notifikasi dan pengaturan aplikasi
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Push Notification Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {notifSubscribed ? (
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <MdNotificationsActive className="w-5 h-5 text-green-600" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <MdNotifications className="w-5 h-5 text-gray-500" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Push Notification</h3>
+                      <p className="text-sm text-gray-600">
+                        {notifSubscribed
+                          ? "Aktif - Anda akan menerima notifikasi tugas baru"
+                          : "Nonaktif - Aktifkan untuk mendapat notifikasi"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {notifSupported ? (
+                    <Button
+                      onClick={notifSubscribed ? notifUnsubscribe : notifSubscribe}
+                      variant={notifSubscribed ? "secondary" : "primary"}
+                      size="sm"
+                      isLoading={notifLoading}
+                      className="min-w-[100px]"
+                    >
+                      {notifSubscribed ? "Nonaktifkan" : "Aktifkan"}
+                    </Button>
+                  ) : (
+                    <span className="text-sm text-gray-500">Tidak didukung</span>
+                  )}
+                </div>
+
+                {notifError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                    <MdError className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-700">{notifError}</p>
+                  </div>
+                )}
+
+                {notifPermission === "denied" && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                      Anda telah menolak izin notifikasi. Buka pengaturan browser untuk mengizinkan notifikasi.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-200" />
+
+              {/* PWA Install Section */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isPwaInstalled ? "bg-green-100" : "bg-blue-100"
+                  }`}>
+                    <MdInstallMobile className={`w-5 h-5 ${
+                      isPwaInstalled ? "text-green-600" : "text-blue-600"
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Install Aplikasi</h3>
+                    <p className="text-sm text-gray-600">
+                      {isPwaInstalled
+                        ? "Aplikasi sudah terinstall"
+                        : "Install untuk akses lebih cepat"}
+                    </p>
+                  </div>
+                </div>
+
+                {isPwaInstalled ? (
+                  <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+                    <MdCheckCircle className="w-4 h-4" /> Terinstall
+                  </span>
+                ) : deferredPrompt ? (
+                  <Button
+                    onClick={handleInstallPwa}
+                    variant="primary"
+                    size="sm"
+                    className="min-w-[100px]"
+                  >
+                    Install
+                  </Button>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    {typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches
+                      ? "Terinstall"
+                      : "Buka di browser"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -561,7 +727,7 @@ export default function Settings() {
                   <MdWarning className="w-8 h-8 text-yellow-600" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Selamat Datang! 👋
+                  Selamat Datang!
                 </h2>
                 <p className="text-gray-600 text-sm mt-2">
                   Ini adalah login pertama Anda. Silakan ubah username dan password default untuk keamanan akun.

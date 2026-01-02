@@ -122,6 +122,11 @@ export function Header() {
                     <span className="hidden lg:inline ml-1">Logout</span>
                   </Button>
 
+                  {/* Mobile Notification Bell */}
+                  <div className="md:hidden">
+                    <NotificationBell />
+                  </div>
+
                   {/* Mobile Menu Button */}
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -198,16 +203,6 @@ export function Header() {
                     <span className="font-medium">Create Task</span>
                   </Link>
                 )}
-
-                {/* Notification Settings - Mobile */}
-                <div className="px-4 py-3 border-t border-b border-gray-200">
-                  <p className="text-xs font-semibold text-gray-600 mb-3 uppercase">
-                    Notifikasi
-                  </p>
-                  <div className="ml-2">
-                    <NotificationBell />
-                  </div>
-                </div>
 
                 <Link
                   to="/settings"

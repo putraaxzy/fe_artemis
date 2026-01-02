@@ -92,21 +92,22 @@ export class PushNotificationService {
       const vapidPublicKey = await this.getVapidPublicKey();
       
       if (!vapidPublicKey) {
-        throw new Error("VAPID public key tidak tersedia. Pastikan backend sudah setup.");
+        throw new Error("VAPID public key tidak tersedia. Pastikan backend sudah setup dengan php artisan vapid:keys");
       }
 
-      // Clean VAPID key (remove PEM headers if present)
-      const cleanKey = vapidPublicKey
-        .replace(/-----BEGIN PUBLIC KEY-----/g, "")
-        .replace(/-----END PUBLIC KEY-----/g, "")
-        .replace(/\s/g, "");
-
-      console.log("Using VAPID key length:", cleanKey.length);
+      // VAPID key sudah dalam format URL-safe base64 dari backend
+      // Panjang yang benar adalah sekitar 87 karakter (65 bytes raw data)
+      console.log("Using VAPID key length:", vapidPublicKey.length);
+      
+      if (vapidPublicKey.length < 80 || vapidPublicKey.length > 90) {
+        console.warn("VAPID key length tidak sesuai. Expected ~87 chars, got:", vapidPublicKey.length);
+        console.warn("Pastikan run: php artisan vapid:keys --force");
+      }
 
       // Subscribe ke push manager
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(cleanKey),
+        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
       });
 
       // Send subscription ke server

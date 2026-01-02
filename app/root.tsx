@@ -8,7 +8,6 @@ import {
 } from "react-router";
 import { useEffect } from "react";
 import { InstallPrompt } from "./components/InstallPrompt";
-import { NotificationPermissionDialog } from "./components/NotificationPermissionDialog";
 import { useInitializePushNotification } from "~/hooks/useInitializePushNotification";
 
 import type { Route } from "./+types/root";
@@ -72,7 +71,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <InstallPrompt />
-        <NotificationPermissionDialog autoShow={true} />
         <ScrollRestoration />
         <Scripts />
       </body>
