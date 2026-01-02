@@ -41,6 +41,15 @@ export const API_ENDPOINTS = {
     REMINDER: "/bot/reminder",
     REMINDER_HISTORY: (taskId: number) => `/bot/reminder/${taskId}`,
   },
+
+  // Notifications
+  NOTIFICATIONS: {
+    SUBSCRIBE: "/notifications/subscribe",
+    UNSUBSCRIBE: "/notifications/unsubscribe",
+    GET_VAPID_KEY: "/notifications/vapid-key",
+    SUBSCRIPTIONS_COUNT: "/notifications/subscriptions-count",
+    TEST: "/notifications/test",
+  },
 } as const;
 
 /**

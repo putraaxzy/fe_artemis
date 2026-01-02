@@ -5,6 +5,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./Button";
+import { NotificationBell } from "./NotificationBell";
 import { useAuth } from "../hooks/useAuth";
 import {
   MdTask,
@@ -86,6 +87,13 @@ export function Header() {
               {/* Divider - Desktop Only */}
               {isAuthenticated && (
                 <div className="hidden md:block w-px h-8 bg-gray-200" />
+              )}
+
+              {/* Notification Bell - Desktop */}
+              {isAuthenticated && (
+                <div className="hidden md:flex">
+                  <NotificationBell />
+                </div>
               )}
 
               {/* User Menu */}
@@ -190,6 +198,17 @@ export function Header() {
                     <span className="font-medium">Create Task</span>
                   </Link>
                 )}
+
+                {/* Notification Settings - Mobile */}
+                <div className="px-4 py-3 border-t border-b border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600 mb-3 uppercase">
+                    Notifikasi
+                  </p>
+                  <div className="ml-2">
+                    <NotificationBell />
+                  </div>
+                </div>
+
                 <Link
                   to="/settings"
                   onClick={() => setMobileMenuOpen(false)}

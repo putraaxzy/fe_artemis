@@ -116,7 +116,49 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation
 - Smooth transitions
 - Accessible focus states
 
-## 🔐 Authentication
+## � Push Notifications
+
+Aplikasi mendukung **Web Push Notifications** untuk real-time updates:
+
+### Features
+- 🔔 Automatic notification untuk tugas baru
+- 📲 Smart notification targeting (per kelas, siswa, jurusan)
+- 🎯 Unobtrusive permission request
+- ⚙️ User-friendly notification settings
+- 🔄 Service Worker untuk background handling
+
+### Auto-Setup
+Saat user pertama kali membuka aplikasi:
+1. Permission dialog muncul otomatis
+2. User approve → Service Worker registered
+3. Frontend subscribe ke push notification
+4. Siap menerima real-time updates
+
+### Permission & Settings
+- Notification bell icon di header untuk settings
+- User bisa enable/disable kapan saja
+- Test notification button untuk development
+
+### Architecture
+```
+Frontend:
+├── usePushNotification (hook)
+├── PushNotificationService (client logic)
+├── NotificationBell (UI bell icon)
+├── NotificationSettings (settings panel)
+├── NotificationPermissionDialog (auto request)
+└── service-worker.js (handle push events)
+
+Backend:
+├── NotificationController
+├── PushNotificationService
+├── PushSubscription Model
+└── Automatic trigger saat task create
+```
+
+Lihat [PUSH_NOTIFICATION_SETUP.md](../be/PUSH_NOTIFICATION_SETUP.md) untuk setup details.
+
+## �🔐 Authentication
 
 The application uses JWT tokens for authentication:
 

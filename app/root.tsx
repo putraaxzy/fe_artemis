@@ -8,6 +8,8 @@ import {
 } from "react-router";
 import { useEffect } from "react";
 import { InstallPrompt } from "./components/InstallPrompt";
+import { NotificationPermissionDialog } from "./components/NotificationPermissionDialog";
+import { useInitializePushNotification } from "~/hooks/useInitializePushNotification";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -27,6 +29,9 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  // Initialize push notifications
+  useInitializePushNotification();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.addEventListener("unhandledrejection", (event) => {
@@ -67,6 +72,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <InstallPrompt />
+        <NotificationPermissionDialog autoShow={true} />
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -1,0 +1,159 @@
+/**
+ * Service Worker for Push Notifications
+ * Handle incoming push notifications dan background sync
+ */
+
+// Cache version
+const CACHE_VERSION = "v1";
+const CACHE_NAME = `notification-cache-${CACHE_VERSION}`;
+
+// Event listener untuk install
+self.addEventListener("install", (event) => {
+  console.log("[Service Worker] Installing...");
+  event.waitUntil(self.skipWaiting());
+});
+
+// Event listener untuk activate
+self.addEventListener("activate", (event) => {
+  console.log("[Service Worker] Activating...");
+  event.waitUntil(self.clients.claim());
+
+  // Clean up old caches
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .map((cacheName) => caches.delete(cacheName))
+      );
+    })
+  );
+});
+
+// Event listener untuk push notification
+self.addEventListener("push", (event) => {
+  console.log("[Service Worker] Push notification received:", event);
+
+  if (!event.data) {
+    console.log("No data in push event");
+    return;
+  }
+
+  let notificationData;
+  try {
+    notificationData = event.data.json();
+  } catch (error) {
+    console.error("Failed to parse push event data:", error);
+    notificationData = {
+      title: "Notifikasi",
+      body: event.data.text(),
+    };
+  }
+
+  const {
+    title = "Notifikasi",
+    body = "",
+    icon = "/icon-192x192.png",
+    badge = "/badge-72x72.png",
+    tag = "default",
+    data = {},
+  } = notificationData;
+
+  const notificationOptions = {
+    body,
+    icon,
+    badge,
+    tag,
+    data,
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    actions: [
+      {
+        action: "open",
+        title: "Buka",
+        icon: "/icon-open.png",
+      },
+      {
+        action: "close",
+        title: "Tutup",
+        icon: "/icon-close.png",
+      },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, notificationOptions)
+  );
+});
+
+// Event listener untuk notification click
+self.addEventListener("notificationclick", (event) => {
+  console.log("[Service Worker] Notification clicked:", event);
+
+  const { action, notification } = event;
+  const { data } = notification;
+  const url = data?.url || "/";
+
+  // Tangani action click
+  if (action === "close") {
+    notification.close();
+    return;
+  }
+
+  // Untuk action 'open' atau default click
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // Cari window yang sudah terbuka
+        for (let client of clientList) {
+          if (client.url === url && "focus" in client) {
+            return client.focus();
+          }
+        }
+
+        // Jika tidak ada window terbuka, buat yang baru
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+  );
+
+  notification.close();
+});
+
+// Event listener untuk notification close
+self.addEventListener("notificationclose", (event) => {
+  console.log("[Service Worker] Notification closed:", event);
+  // Bisa track analytics tentang dismissed notifications
+});
+
+// Event listener untuk background sync (optional)
+self.addEventListener("sync", (event) => {
+  console.log("[Service Worker] Background sync:", event.tag);
+
+  if (event.tag === "sync-notifications") {
+    event.waitUntil(syncNotifications());
+  }
+});
+
+/**
+ * Sync notifications function
+ * Dipanggil saat browser memiliki koneksi internet kembali
+ */
+async function syncNotifications() {
+  try {
+    console.log("[Service Worker] Syncing notifications...");
+    // Add your sync logic here
+  } catch (error) {
+    console.error("[Service Worker] Error during sync:", error);
+  }
+}
+
+// Handle fetch events (optional - for precaching)
+self.addEventListener("fetch", (event) => {
+  // Implement caching strategy jika diperlukan
+  // Contoh: cache-first, network-first, stale-while-revalidate, dll
+});
+
+console.log("[Service Worker] Loaded successfully");

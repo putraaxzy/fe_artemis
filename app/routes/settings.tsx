@@ -548,17 +548,6 @@ export default function Settings() {
               )}
             </form>
           </div>
-
-          {/* Info Section */}
-          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl">
-            <h3 className="font-medium text-blue-900 mb-2">ℹ️ Informasi</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Username bisa diubah maksimal 7 hari sekali</li>
-              <li>• Kelas dan jurusan sudah ditentukan oleh sekolah</li>
-              <li>• Ukuran avatar maksimal 10MB</li>
-              <li>• Format avatar: JPEG, PNG, GIF, WebP</li>
-            </ul>
-          </div>
         </div>
       </main>
 
