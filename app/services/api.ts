@@ -90,6 +90,9 @@ export interface BotReminder {
 export interface RegisterOptions {
   kelas: string[];
   jurusan: string[];
+  jurusan_by_kelas?: {
+    [key: string]: string[];
+  };
 }
 
 export interface Siswa {

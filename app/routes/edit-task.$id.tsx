@@ -285,9 +285,9 @@ export default function EditTask() {
       const normalizedIdTarget =
         formData.target === "kelas"
           ? selectedClasses.map((c) => ({
-              kelas: c.kelas.toUpperCase().trim(),
-              jurusan: c.jurusan.toUpperCase().trim(),
-            }))
+            kelas: c.kelas.toUpperCase().trim(),
+            jurusan: c.jurusan.toUpperCase().trim(),
+          }))
           : selectedStudents;
 
       const payload = new FormData();
@@ -371,7 +371,7 @@ export default function EditTask() {
       <main className="min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Button
-            onClick={() => navigate("/tasks")}
+            onClick={() => navigate("/dashboard")}
             variant="ghost"
             size="sm"
             className="mb-6"
@@ -576,14 +576,17 @@ export default function EditTask() {
                     <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
                       <div className="grid gap-4">
                         {options.kelas?.map((kelas) => {
-                          const totalStudents = options.jurusan?.reduce(
+                          // Gunakan jurusan_by_kelas jika tersedia, fallback ke jurusan
+                          const jurusanList = options.jurusan_by_kelas?.[kelas] || options.jurusan || [];
+
+                          const totalStudents = jurusanList.reduce(
                             (sum, jurusan) => {
                               const kelasInfo = availableKelas?.find(
                                 (k) =>
                                   k.kelas?.toUpperCase() ===
-                                    kelas.toUpperCase() &&
+                                  kelas.toUpperCase() &&
                                   k.jurusan?.toUpperCase() ===
-                                    jurusan.toUpperCase()
+                                  jurusan.toUpperCase()
                               );
                               return sum + (kelasInfo?.jumlah_siswa || 0);
                             },
@@ -601,13 +604,13 @@ export default function EditTask() {
                                 </div>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 ml-4 mb-3">
-                                {options.jurusan?.map((jurusan) => {
+                                {jurusanList.map((jurusan) => {
                                   const kelasInfo = availableKelas?.find(
                                     (k) =>
                                       k.kelas?.toUpperCase() ===
-                                        kelas.toUpperCase() &&
+                                      kelas.toUpperCase() &&
                                       k.jurusan?.toUpperCase() ===
-                                        jurusan.toUpperCase()
+                                      jurusan.toUpperCase()
                                   );
                                   const studentCount =
                                     kelasInfo?.jumlah_siswa || 0;

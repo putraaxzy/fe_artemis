@@ -39,17 +39,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }
       });
 
-      if ("serviceWorker" in navigator && import.meta.env.PROD) {
-        import("virtual:pwa-register")
-          .then(({ registerSW }) => {
-            registerSW({
-              immediate: true,
-              onRegistered() {
-                console.log("sw registered");
-              },
-            });
+      if ("serviceWorker" in navigator) {
+        // Register service worker manually for both DEV and PROD
+        navigator.serviceWorker
+          .register("/service-worker.js")
+          .then((registration) => {
+            console.log(
+              "Service Worker registered with scope:",
+              registration.scope
+            );
           })
-          .catch(() => {});
+          .catch((error) => {
+            console.error("Service Worker registration failed:", error);
+          });
       }
     }
   }, []);

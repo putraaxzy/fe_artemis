@@ -69,6 +69,7 @@ export default function TaskDetail() {
     "selesai"
   );
   const [isGrading, setIsGrading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchTaskDetail = async () => {
     if (!id) {
@@ -316,7 +317,9 @@ export default function TaskDetail() {
                 <div className="flex gap-2 flex-shrink-0">
                   <Button
                     onClick={async () => {
+                      if (isExporting) return;
                       try {
+                        setIsExporting(true);
                         const blob = await taskService.exportTask(Number(id));
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement("a");
@@ -329,13 +332,23 @@ export default function TaskDetail() {
                       } catch (err) {
                         console.error("Export failed:", err);
                         alert("Gagal export tugas");
+                      } finally {
+                        setIsExporting(false);
                       }
                     }}
-                    className="flex items-center gap-2 whitespace-nowrap"
+                    className="flex items-center gap-2 whitespace-nowrap px-3 sm:px-4"
                     variant="secondary"
+                    title="Export Excel"
+                    disabled={isExporting}
                   >
-                    <MdDownload className="w-5 h-5" />
-                    Export Excel
+                    {isExporting ? (
+                      <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <MdDownload className="w-5 h-5" />
+                    )}
+                    <span className="hidden sm:inline">
+                      {isExporting ? "Exporting..." : "Export Excel"}
+                    </span>
                   </Button>
                 </div>
               )}
@@ -430,158 +443,158 @@ export default function TaskDetail() {
             task.file_detail ||
             task.tanggal_mulai ||
             task.tanggal_deadline) && (
-            <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <MdDescription className="text-2xl text-gray-700" />
-                Detail Tugas
-              </h2>
-              <div className="space-y-6">
-                {task.deskripsi && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                      Deskripsi
-                    </p>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                      <p className="text-gray-900 whitespace-pre-wrap break-words leading-relaxed">
-                        {task.deskripsi}
+              <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <MdDescription className="text-2xl text-gray-700" />
+                  Detail Tugas
+                </h2>
+                <div className="space-y-6">
+                  {task.deskripsi && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                        Deskripsi
                       </p>
-                    </div>
-                  </div>
-                )}
-
-                {(task.tanggal_mulai || task.tanggal_deadline) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {task.tanggal_mulai && (
                       <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-1">
-                          <MdRocketLaunch className="text-base" /> Mulai
-                        </p>
-                        <p className="text-gray-900 font-medium">
-                          {new Date(task.tanggal_mulai).toLocaleString(
-                            "id-ID",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                        <p className="text-gray-900 whitespace-pre-wrap break-words leading-relaxed">
+                          {task.deskripsi}
                         </p>
                       </div>
-                    )}
-                    {task.tanggal_deadline && (
-                      <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                        <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2 flex items-center gap-1">
-                          <MdTimer className="text-base" /> Deadline
-                        </p>
-                        <p className="text-red-900 font-bold">
-                          {new Date(task.tanggal_deadline).toLocaleString(
-                            "id-ID",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
+                    </div>
+                  )}
+
+                  {(task.tanggal_mulai || task.tanggal_deadline) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {task.tanggal_mulai && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                            <MdRocketLaunch className="text-base" /> Mulai
+                          </p>
+                          <p className="text-gray-900 font-medium">
+                            {new Date(task.tanggal_mulai).toLocaleString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {task.tanggal_deadline && (
+                        <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+                            <MdTimer className="text-base" /> Deadline
+                          </p>
+                          <p className="text-red-900 font-bold">
+                            {new Date(task.tanggal_deadline).toLocaleString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {task.file_detail &&
+                    (() => {
+                      const fileUrl = `https://engine.ptraazxtt.my.id/storage/${task.file_detail}`;
+                      const fileName =
+                        task.file_detail.split("/").pop() || "file";
+                      const fileExt =
+                        fileName.split(".").pop()?.toLowerCase() || "";
+
+                      const imageFormats = [
+                        "jpg",
+                        "jpeg",
+                        "png",
+                        "gif",
+                        "webp",
+                        "svg",
+                        "bmp",
+                      ];
+                      const videoFormats = [
+                        "mp4",
+                        "webm",
+                        "ogg",
+                        "mov",
+                        "avi",
+                        "mkv",
+                      ];
+                      const audioFormats = ["mp3", "wav", "ogg", "aac", "m4a"];
+
+                      return (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-1">
+                            <MdAttachFile className="text-base" /> File Lampiran
+                          </p>
+
+                          {imageFormats.includes(fileExt) && (
+                            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                              <img
+                                src={fileUrl}
+                                alt="Task attachment"
+                                className="w-full h-auto max-w-full object-contain"
+                              />
+                            </div>
                           )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {task.file_detail &&
-                  (() => {
-                    const fileUrl = `https://engine.ptraazxtt.my.id/storage/${task.file_detail}`;
-                    const fileName =
-                      task.file_detail.split("/").pop() || "file";
-                    const fileExt =
-                      fileName.split(".").pop()?.toLowerCase() || "";
-
-                    const imageFormats = [
-                      "jpg",
-                      "jpeg",
-                      "png",
-                      "gif",
-                      "webp",
-                      "svg",
-                      "bmp",
-                    ];
-                    const videoFormats = [
-                      "mp4",
-                      "webm",
-                      "ogg",
-                      "mov",
-                      "avi",
-                      "mkv",
-                    ];
-                    const audioFormats = ["mp3", "wav", "ogg", "aac", "m4a"];
-
-                    return (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-1">
-                          <MdAttachFile className="text-base" /> File Lampiran
-                        </p>
-
-                        {imageFormats.includes(fileExt) && (
-                          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                            <img
-                              src={fileUrl}
-                              alt="Task attachment"
-                              className="w-full h-auto max-w-full object-contain"
-                            />
-                          </div>
-                        )}
-
-                        {videoFormats.includes(fileExt) && (
-                          <div className="bg-black rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                            <video
-                              controls
-                              className="w-full h-auto max-w-full"
-                              preload="metadata"
-                            >
-                              <source src={fileUrl} type={`video/${fileExt}`} />
-                              Browser Anda tidak mendukung video player.
-                            </video>
-                          </div>
-                        )}
-
-                        {audioFormats.includes(fileExt) && (
-                          <div className="bg-gray-50 rounded-xl p-6 shadow-sm border border-gray-200">
-                            <audio
-                              controls
-                              className="w-full"
-                              preload="metadata"
-                            >
-                              <source src={fileUrl} type={`audio/${fileExt}`} />
-                              Browser Anda tidak mendukung audio player.
-                            </audio>
-                            <p className="text-sm text-gray-600 mt-3 text-center flex items-center justify-center gap-2">
-                              <MdAudiotrack /> {fileName}
-                            </p>
-                          </div>
-                        )}
-
-                        {!imageFormats.includes(fileExt) &&
-                          !videoFormats.includes(fileExt) &&
-                          !audioFormats.includes(fileExt) && (
-                            <a
-                              href={fileUrl}
-                              download
-                              className="inline-flex items-center gap-3 px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 hover:shadow-md transition-all font-medium"
-                            >
-                              <MdDownload className="w-5 h-5" />
-                              Download {fileName}
-                            </a>
+                          {videoFormats.includes(fileExt) && (
+                            <div className="bg-black rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                              <video
+                                controls
+                                className="w-full h-auto max-w-full"
+                                preload="metadata"
+                              >
+                                <source src={fileUrl} type={`video/${fileExt}`} />
+                                Browser Anda tidak mendukung video player.
+                              </video>
+                            </div>
                           )}
-                      </div>
-                    );
-                  })()}
+
+                          {audioFormats.includes(fileExt) && (
+                            <div className="bg-gray-50 rounded-xl p-6 shadow-sm border border-gray-200">
+                              <audio
+                                controls
+                                className="w-full"
+                                preload="metadata"
+                              >
+                                <source src={fileUrl} type={`audio/${fileExt}`} />
+                                Browser Anda tidak mendukung audio player.
+                              </audio>
+                              <p className="text-sm text-gray-600 mt-3 text-center flex items-center justify-center gap-2">
+                                <MdAudiotrack /> {fileName}
+                              </p>
+                            </div>
+                          )}
+
+                          {!imageFormats.includes(fileExt) &&
+                            !videoFormats.includes(fileExt) &&
+                            !audioFormats.includes(fileExt) && (
+                              <a
+                                href={fileUrl}
+                                download
+                                className="inline-flex items-center gap-3 px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 hover:shadow-md transition-all font-medium"
+                              >
+                                <MdDownload className="w-5 h-5" />
+                                Download {fileName}
+                              </a>
+                            )}
+                        </div>
+                      );
+                    })()}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Guru View - Statistics */}
           {isGuru && (
@@ -669,15 +682,14 @@ export default function TaskDetail() {
                     Status Tugas
                   </span>
                   <span
-                    className={`px-4 py-2 rounded-full text-xs font-bold ${
-                      task.penugasan[0].status === "pending"
-                        ? "bg-gray-100 text-gray-800 border border-gray-300"
-                        : task.penugasan[0].status === "dikirim"
-                          ? "bg-blue-100 text-blue-800 border border-blue-300"
-                          : task.penugasan[0].status === "selesai"
-                            ? "bg-green-100 text-green-800 border border-green-300"
-                            : "bg-red-100 text-red-800 border border-red-300"
-                    }`}
+                    className={`px-4 py-2 rounded-full text-xs font-bold ${task.penugasan[0].status === "pending"
+                      ? "bg-gray-100 text-gray-800 border border-gray-300"
+                      : task.penugasan[0].status === "dikirim"
+                        ? "bg-blue-100 text-blue-800 border border-blue-300"
+                        : task.penugasan[0].status === "selesai"
+                          ? "bg-green-100 text-green-800 border border-green-300"
+                          : "bg-red-100 text-red-800 border border-red-300"
+                      }`}
                   >
                     {task.penugasan[0].status === "pending"
                       ? "Belum Dikumpulkan"
@@ -763,62 +775,62 @@ export default function TaskDetail() {
               {/* Submit form - show if pending or rejected (for resubmission) */}
               {(task.penugasan[0].status === "pending" ||
                 task.penugasan[0].status === "ditolak") && (
-                <>
-                  {submitSuccess && (
-                    <Alert
-                      type="success"
-                      message="Tugas berhasil dikumpulkan! Mengalihkan..."
-                      className="mb-4"
-                    />
-                  )}
-
-                  {submitError && (
-                    <Alert
-                      type="error"
-                      message={submitError}
-                      onClose={() => setSubmitError("")}
-                      className="mb-4"
-                    />
-                  )}
-
-                  <form onSubmit={handleSubmitTask} className="space-y-4">
-                    {task.tipe_pengumpulan === "link" && (
-                      <Input
-                        label="Link Google Drive"
-                        type="url"
-                        placeholder="https://drive.google.com/file/d/..."
-                        value={linkDrive}
-                        onChange={(e) => setLinkDrive(e.target.value)}
-                        required
-                        disabled={isSubmitting}
-                        helperText="Tempelkan link Google Drive Anda di sini"
+                  <>
+                    {submitSuccess && (
+                      <Alert
+                        type="success"
+                        message="Tugas berhasil dikumpulkan! Mengalihkan..."
+                        className="mb-4"
                       />
                     )}
 
-                    <Button
-                      type="submit"
-                      isLoading={isSubmitting}
-                      className="w-full bg-gray-900 hover:bg-gray-800 shadow-sm flex items-center justify-center gap-2"
-                    >
-                      {task.tipe_pengumpulan === "link" ? (
-                        <>
-                          <MdLink className="w-5 h-5" />
-                          {task.penugasan[0].status === "ditolak"
-                            ? "Kirim Ulang"
-                            : "Kirim Tugas"}
-                        </>
-                      ) : (
-                        <>
-                          <MdSend className="w-5 h-5" />
-                          {task.penugasan[0].status === "ditolak"
-                            ? "Konfirmasi Pengumpulan Ulang"
-                            : "Konfirmasi Pengumpulan"}
-                        </>
+                    {submitError && (
+                      <Alert
+                        type="error"
+                        message={submitError}
+                        onClose={() => setSubmitError("")}
+                        className="mb-4"
+                      />
+                    )}
+
+                    <form onSubmit={handleSubmitTask} className="space-y-4">
+                      {task.tipe_pengumpulan === "link" && (
+                        <Input
+                          label="Link Google Drive"
+                          type="url"
+                          placeholder="https://drive.google.com/file/d/..."
+                          value={linkDrive}
+                          onChange={(e) => setLinkDrive(e.target.value)}
+                          required
+                          disabled={isSubmitting}
+                          helperText="Tempelkan link Google Drive Anda di sini"
+                        />
                       )}
-                    </Button>
-                  </form>
-                </>
-              )}
+
+                      <Button
+                        type="submit"
+                        isLoading={isSubmitting}
+                        className="w-full bg-gray-900 hover:bg-gray-800 shadow-sm flex items-center justify-center gap-2"
+                      >
+                        {task.tipe_pengumpulan === "link" ? (
+                          <>
+                            <MdLink className="w-5 h-5" />
+                            {task.penugasan[0].status === "ditolak"
+                              ? "Kirim Ulang"
+                              : "Kirim Tugas"}
+                          </>
+                        ) : (
+                          <>
+                            <MdSend className="w-5 h-5" />
+                            {task.penugasan[0].status === "ditolak"
+                              ? "Konfirmasi Pengumpulan Ulang"
+                              : "Konfirmasi Pengumpulan"}
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </>
+                )}
 
               {/* Message if already submitted */}
               {task.penugasan[0].status === "dikirim" && (
@@ -943,7 +955,7 @@ export default function TaskDetail() {
 
                       {/* Grade Display or Form */}
                       {penugasan.status === "dikirim" &&
-                      gradingPenugasanId === penugasan.id ? (
+                        gradingPenugasanId === penugasan.id ? (
                         <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
                           <h4 className="font-bold text-gray-900 flex items-center gap-2">
                             <MdDescription /> Berikan Penilaian
@@ -1041,40 +1053,40 @@ export default function TaskDetail() {
 
                       {(penugasan.nilai !== undefined ||
                         penugasan.catatan_guru) && (
-                        <div className="mt-3 pt-3 border-t border-gray-200 bg-gray-50/50 rounded-lg p-4">
-                          {penugasan.nilai !== undefined && (
-                            <div className="mb-3">
-                              <p className="text-sm text-gray-600 mb-1">
-                                Nilai:
-                              </p>
-                              <div className="flex items-center gap-3">
-                                <span className="text-2xl font-bold text-gray-900">
-                                  {penugasan.nilai}
-                                  <span className="text-base text-gray-600">
-                                    /100
+                          <div className="mt-3 pt-3 border-t border-gray-200 bg-gray-50/50 rounded-lg p-4">
+                            {penugasan.nilai !== undefined && (
+                              <div className="mb-3">
+                                <p className="text-sm text-gray-600 mb-1">
+                                  Nilai:
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-2xl font-bold text-gray-900">
+                                    {penugasan.nilai}
+                                    <span className="text-base text-gray-600">
+                                      /100
+                                    </span>
                                   </span>
-                                </span>
-                                <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                  <div
-                                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2.5 rounded-full"
-                                    style={{ width: `${penugasan.nilai}%` }}
-                                  />
+                                  <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                    <div
+                                      className="bg-gradient-to-r from-blue-500 to-green-500 h-2.5 rounded-full"
+                                      style={{ width: `${penugasan.nilai}%` }}
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                          {penugasan.catatan_guru && (
-                            <div>
-                              <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
-                                <MdComment /> Catatan:
-                              </p>
-                              <p className="text-sm text-gray-900 bg-white/70 rounded-lg p-3 border border-gray-200">
-                                {penugasan.catatan_guru}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                            {penugasan.catatan_guru && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
+                                  <MdComment /> Catatan:
+                                </p>
+                                <p className="text-sm text-gray-900 bg-white/70 rounded-lg p-3 border border-gray-200">
+                                  {penugasan.catatan_guru}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                     </div>
                   ))}
               </div>

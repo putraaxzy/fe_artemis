@@ -46,14 +46,8 @@ export class PushNotificationService {
    * Get VAPID public key dari server
    */
   static async getVapidPublicKey(): Promise<string> {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.GET_VAPID_KEY}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
+    const baseUrl = API_BASE_URL.replace(/\/api$/, '');
+    const response = await fetch(`${baseUrl}/vapid-key`);
 
     if (!response.ok) {
       throw new Error("Gagal mengambil VAPID public key");
