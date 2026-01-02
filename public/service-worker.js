@@ -53,8 +53,8 @@ self.addEventListener("push", (event) => {
   const {
     title = "Notifikasi",
     body = "",
-    icon = "/icon-192x192.png",
-    badge = "/badge-72x72.png",
+    icon = "/batik.png",
+    badge = "/batik.png",
     tag = "default",
     data = {},
   } = notificationData;
@@ -150,10 +150,7 @@ async function syncNotifications() {
   }
 }
 
-// Handle fetch events (optional - for precaching)
-self.addEventListener("fetch", (event) => {
-  // Implement caching strategy jika diperlukan
-  // Contoh: cache-first, network-first, stale-while-revalidate, dll
-});
+// Fetch handler removed - not needed for push notifications only
+// Add back if you need caching strategies
 
 console.log("[Service Worker] Loaded successfully");

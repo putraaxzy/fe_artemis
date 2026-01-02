@@ -90,11 +90,23 @@ export class PushNotificationService {
 
       // Get VAPID public key
       const vapidPublicKey = await this.getVapidPublicKey();
+      
+      if (!vapidPublicKey) {
+        throw new Error("VAPID public key tidak tersedia. Pastikan backend sudah setup.");
+      }
+
+      // Clean VAPID key (remove PEM headers if present)
+      const cleanKey = vapidPublicKey
+        .replace(/-----BEGIN PUBLIC KEY-----/g, "")
+        .replace(/-----END PUBLIC KEY-----/g, "")
+        .replace(/\s/g, "");
+
+      console.log("Using VAPID key length:", cleanKey.length);
 
       // Subscribe ke push manager
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: this.urlBase64ToUint8Array(cleanKey),
       });
 
       // Send subscription ke server
