@@ -10,13 +10,13 @@ const CACHE_NAME = `notification-cache-${CACHE_VERSION}`;
 // Event listener untuk install
 self.addEventListener("install", (event) => {
   console.log("[Service Worker] Installing...");
-  event.waitUntil(self.skipWaiting());
+  // event.waitUntil(self.skipWaiting());
 });
 
 // Event listener untuk activate
 self.addEventListener("activate", (event) => {
   console.log("[Service Worker] Activating...");
-  event.waitUntil(self.clients.claim());
+  // event.waitUntil(self.clients.claim());
 
   // Clean up old caches
   event.waitUntil(
