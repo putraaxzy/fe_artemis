@@ -55,11 +55,19 @@ export function useAuth() {
     navigate("/login");
   };
 
+  const refreshUser = () => {
+    const storedUser = userService.getUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  };
+
   return {
     user,
     isAuthenticated,
     isLoading,
     logout,
+    refreshUser,
     isGuru: userService.isGuru(),
     isSiswa: userService.isSiswa(),
   };

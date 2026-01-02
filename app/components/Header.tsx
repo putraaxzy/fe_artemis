@@ -13,6 +13,7 @@ import {
   MdClose,
   MdLogout,
   MdArrowUpward,
+  MdSettings,
 } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 
@@ -72,6 +73,13 @@ export function Header() {
                       <span>Create Task</span>
                     </Link>
                   )}
+                  <Link
+                    to="/settings"
+                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                  >
+                    <MdSettings className="w-4 h-4" />
+                    <span>Settings</span>
+                  </Link>
                 </nav>
               )}
 
@@ -182,6 +190,14 @@ export function Header() {
                     <span className="font-medium">Create Task</span>
                   </Link>
                 )}
+                <Link
+                  to="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MdSettings className="w-5 h-5" />
+                  <span className="font-medium">Settings</span>
+                </Link>
                 <button
                   onClick={() => {
                     logout();

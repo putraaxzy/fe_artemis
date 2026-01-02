@@ -4,12 +4,12 @@ import {
   authService,
   tokenService,
   userService,
-  type RegisterOptions,
 } from "../services/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Alert } from "../components/Alert";
 import { useAuth } from "../hooks/useAuth";
+import { CLASSES, MAJORS } from "../constants";
 
 export function meta() {
   return [
@@ -29,11 +29,8 @@ export default function Register() {
     kelas: "",
     jurusan: "",
   });
-
-  const [options, setOptions] = useState<RegisterOptions | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,41 +38,6 @@ export default function Register() {
       navigate("/dashboard");
     }
   }, [authLoading, isAuthenticated, navigate]);
-
-  // ambil opsi register saat komponen mount
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const response = await authService.getRegisterOptions();
-        if (response.berhasil) {
-          setOptions(response.data);
-        } else {
-          setError(response.pesan || "gagal memuat opsi");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "gagal memuat opsi");
-      } finally {
-        setIsLoadingOptions(false);
-      }
-    };
-
-    fetchOptions();
-  }, []);
-
-  if (authLoading) {
-    return null;
-  }
-
-  if (isLoadingOptions) {
-    return (
-      <main className="flex items-center justify-center min-h-screen bg-white">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin mb-4" />
-          <p className="text-gray-600">memuat...</p>
-        </div>
-      </main>
-    );
-  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -236,10 +198,10 @@ export default function Register() {
                   onChange={handleChange}
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">pilih</option>
-                  {options?.kelas.map((k) => (
+                  <option value="" disabled>pilih</option>
+                  {CLASSES.map((k) => (
                     <option key={k} value={k}>
                       {k}
                     </option>
@@ -256,11 +218,11 @@ export default function Register() {
                   value={formData.jurusan}
                   onChange={handleChange}
                   required
-                  disabled={isLoading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  disabled={isLoading || !formData.kelas}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">pilih</option>
-                  {options?.jurusan.map((j) => (
+                  <option value="" disabled>pilih</option>
+                  {formData.kelas && MAJORS[formData.kelas as keyof typeof MAJORS]?.map((j) => (
                     <option key={j} value={j}>
                       {j}
                     </option>

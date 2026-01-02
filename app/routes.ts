@@ -8,4 +8,5 @@ export default [
   route("dashboard/:id", "routes/task-detail.tsx"),
   route("create-task", "routes/create-task.tsx"),
   route("edit-task/:id", "routes/edit-task.$id.tsx"),
+  route("settings", "routes/settings.tsx"),
 ] satisfies RouteConfig;

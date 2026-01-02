@@ -14,6 +14,10 @@ export interface User {
   role: "guru" | "siswa";
   kelas?: string;
   jurusan?: string;
+  avatar?: string;
+  is_first_login?: boolean;
+  can_change_username?: boolean;
+  days_until_username_change?: number;
   dibuat_pada: string;
   diperbarui_pada: string;
 }
@@ -25,31 +29,27 @@ export interface AuthResponse {
 
 export interface Task {
   id: number;
+  id_guru: number;
   judul: string;
+  deskripsi?: string;
+  file_detail?: string;
   target: "siswa" | "kelas";
+  id_target: any[];
   tipe_pengumpulan: "link" | "langsung";
-  guru?: string;
+  tanggal_mulai: string;
+  tanggal_deadline: string;
+  tampilkan_nilai: boolean;
+  guru?: string | User;
   status?: "pending" | "dikirim" | "selesai" | "ditolak";
   total_siswa?: number;
   pending?: number;
   dikirim?: number;
   selesai?: number;
-  deskripsi?: string;
-  file_detail?: string;
-  tanggal_mulai?: string;
-  tanggal_deadline?: string;
-  tampilkan_nilai?: boolean;
   dibuat_pada: string;
-  diperbarui_pada?: string;
+  diperbarui_pada: string;
 }
 
 export interface TaskDetail extends Task {
-  id_target: any[];
-  deskripsi?: string;
-  file_detail?: string;
-  tanggal_mulai?: string;
-  tanggal_deadline?: string;
-  tampilkan_nilai: boolean;
   statistik: {
     total_siswa: number;
     pending: number;
@@ -62,6 +62,8 @@ export interface TaskDetail extends Task {
 
 export interface Penugasan {
   id: number;
+  id_tugas: number;
+  id_siswa: number;
   siswa: User;
   status: "pending" | "dikirim" | "selesai" | "ditolak";
   link_drive?: string;
@@ -70,6 +72,19 @@ export interface Penugasan {
   catatan_guru?: string;
   dibuat_pada: string;
   diperbarui_pada: string;
+  tugas?: Task;
+}
+
+export interface BotReminder {
+  id: number;
+  id_tugas: number;
+  id_siswa: number;
+  pesan: string;
+  id_pesan: string;
+  dibuat_pada: string;
+  diperbarui_pada: string;
+  tugas?: Task;
+  siswa?: User;
 }
 
 export interface RegisterOptions {
@@ -579,5 +594,34 @@ export const userService = {
    */
   isSiswa(): boolean {
     return this.getRole() === "siswa";
+  },
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(payload: {
+    username?: string;
+    name?: string;
+    telepon?: string;
+    password?: string;
+  }): Promise<ApiResponse<User>> {
+    return apiCall<User>("/user/profile", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /**
+   * Update profile with avatar (FormData)
+   */
+  async updateProfileWithAvatar(formData: FormData): Promise<ApiResponse<User>> {
+    return apiCallFormData<User>("/user/profile", formData, { method: "POST" });
+  },
+
+  /**
+   * Complete first login setup
+   */
+  async completeFirstLogin(formData: FormData): Promise<ApiResponse<User>> {
+    return apiCallFormData<User>("/user/complete-first-login", formData, { method: "POST" });
   },
 };

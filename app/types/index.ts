@@ -24,6 +24,34 @@ export type TaskTarget = "siswa" | "kelas";
 
 export interface Task {
   id: number;
+  id_guru: number;
+  judul: string;
+  deskripsi?: string;
+  file_detail?: string;
+  target: TaskTarget;
+  id_target: any[];
+  tipe_pengumpulan: SubmissionType;
+  tanggal_mulai: string;
+  tanggal_deadline: string;
+  tampilkan_nilai: boolean;
+  guru?: User;
+  dibuat_pada: string;
+  diperbarui_pada: string;
+}
+
+export interface TaskDetail extends Task {
+  statistik?: {
+    total_siswa: number;
+    pending: number;
+    dikirim: number;
+    selesai: number;
+    ditolak: number;
+  };
+  penugasan: Penugasan[];
+}
+
+export interface TaskSummary {
+  id: number;
   judul: string;
   target: TaskTarget;
   tipe_pengumpulan: SubmissionType;
@@ -37,22 +65,11 @@ export interface Task {
   diperbarui_pada?: string;
 }
 
-export interface TaskDetail extends Task {
-  id_target: any[];
-  tampilkan_nilai: boolean;
-  statistik: {
-    total_siswa: number;
-    pending: number;
-    dikirim: number;
-    selesai: number;
-    ditolak: number;
-  };
-  penugasan: Penugasan[];
-}
-
 // tipe penugasan
 export interface Penugasan {
   id: number;
+  id_tugas: number;
+  id_siswa: number;
   siswa: User;
   status: TaskStatus;
   link_drive?: string;
@@ -61,6 +78,20 @@ export interface Penugasan {
   catatan_guru?: string;
   dibuat_pada: string;
   diperbarui_pada: string;
+  tugas?: Task;
+}
+
+// tipe bot reminder
+export interface BotReminder {
+  id: number;
+  id_tugas: number;
+  id_siswa: number;
+  pesan: string;
+  id_pesan: string;
+  dibuat_pada: string;
+  diperbarui_pada: string;
+  tugas?: Task;
+  siswa?: User;
 }
 
 // tipe respons api
@@ -98,9 +129,13 @@ export interface RegisterFormData {
 
 export interface CreateTaskFormData {
   judul: string;
+  deskripsi?: string;
+  file_detail?: string;
   target: TaskTarget;
   tipe_pengumpulan: SubmissionType;
   tampilkan_nilai: boolean;
+  tanggal_mulai: string;
+  tanggal_deadline: string;
   id_target: number[] | Array<{ kelas: string; jurusan: string }>;
 }
 

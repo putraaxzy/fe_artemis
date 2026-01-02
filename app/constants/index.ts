@@ -32,7 +32,11 @@ export const SUBMISSION_TYPES = {
 export const CLASSES = ["X", "XI", "XII"] as const;
 
 // Majors
-export const MAJORS = ["MPLB", "RPL", "PM", "TKJ", "AKL"] as const;
+export const MAJORS = {
+  X: ["MPLB 1", "MPLB 2", "MPLB 3", "TJKT", "PPLG", "AKL", "PM"] as const,
+  XI: ["RPL", "TKJ", "MP 1", "MP 2", "MP 3", "AK", "PM"] as const,
+  XII: ["RPL", "TKJ", "BD", "MP 1", "MP 2", "AK 1", "AK 2"] as const,
+} as const;
 
 // Status Colors
 export const STATUS_COLORS = {
