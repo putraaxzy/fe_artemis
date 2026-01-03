@@ -290,9 +290,9 @@ export default function CreateTask() {
       const normalizedIdTarget =
         formData.target === "kelas"
           ? selectedClasses.map((c) => ({
-            kelas: c.kelas.toUpperCase().trim(),
-            jurusan: c.jurusan.toUpperCase().trim(),
-          }))
+              kelas: c.kelas.toUpperCase().trim(),
+              jurusan: c.jurusan.toUpperCase().trim(),
+            }))
           : selectedStudents;
 
       const payload: any = {
@@ -586,16 +586,17 @@ export default function CreateTask() {
                     <div className="border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
                       <div className="grid gap-4">
                         {options.kelas?.map((kelas) => {
+                          // Gunakan jurusan_by_kelas jika tersedia, fallback ke jurusan
                           const jurusanList = options.jurusan_by_kelas?.[kelas] || options.jurusan || [];
-
+                          
                           const totalStudents = jurusanList.reduce(
                             (sum, jurusan) => {
                               const kelasInfo = availableKelas?.find(
                                 (k) =>
                                   k.kelas?.toUpperCase() ===
-                                  kelas.toUpperCase() &&
+                                    kelas.toUpperCase() &&
                                   k.jurusan?.toUpperCase() ===
-                                  jurusan.toUpperCase()
+                                    jurusan.toUpperCase()
                               );
                               return sum + (kelasInfo?.jumlah_siswa || 0);
                             },
@@ -617,9 +618,9 @@ export default function CreateTask() {
                                   const kelasInfo = availableKelas?.find(
                                     (k) =>
                                       k.kelas?.toUpperCase() ===
-                                      kelas.toUpperCase() &&
+                                        kelas.toUpperCase() &&
                                       k.jurusan?.toUpperCase() ===
-                                      jurusan.toUpperCase()
+                                        jurusan.toUpperCase()
                                   );
                                   const studentCount =
                                     kelasInfo?.jumlah_siswa || 0;
@@ -648,18 +649,20 @@ export default function CreateTask() {
                                         className="w-4 h-4 text-gray-900 rounded focus:ring-2 focus:ring-gray-900"
                                       />
                                       <span
-                                        className={`flex-1 font-medium ${hasWarning
+                                        className={`flex-1 font-medium ${
+                                          hasWarning
                                             ? "text-orange-600"
                                             : "text-gray-700"
-                                          }`}
+                                        }`}
                                       >
                                         {jurusan}
                                       </span>
                                       <span
-                                        className={`text-xs whitespace-nowrap ${hasWarning
+                                        className={`text-xs whitespace-nowrap ${
+                                          hasWarning
                                             ? "text-orange-500"
                                             : "text-gray-500"
-                                          }`}
+                                        }`}
                                       >
                                         ({studentCount})
                                       </span>

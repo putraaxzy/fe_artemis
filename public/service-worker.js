@@ -9,14 +9,12 @@ const CACHE_NAME = `notification-cache-${CACHE_VERSION}`;
 
 // Event listener untuk install
 self.addEventListener("install", (event) => {
-  console.log("[Service Worker] Installing...");
-  // event.waitUntil(self.skipWaiting());
+  event.waitUntil(self.skipWaiting());
 });
 
 // Event listener untuk activate
 self.addEventListener("activate", (event) => {
-  console.log("[Service Worker] Activating...");
-  // event.waitUntil(self.clients.claim());
+  event.waitUntil(self.clients.claim());
 
   // Clean up old caches
   event.waitUntil(
@@ -32,10 +30,7 @@ self.addEventListener("activate", (event) => {
 
 // Event listener untuk push notification
 self.addEventListener("push", (event) => {
-  console.log("[Service Worker] Push notification received:", event);
-
   if (!event.data) {
-    console.log("No data in push event");
     return;
   }
 
@@ -43,7 +38,6 @@ self.addEventListener("push", (event) => {
   try {
     notificationData = event.data.json();
   } catch (error) {
-    console.error("Failed to parse push event data:", error);
     notificationData = {
       title: "Notifikasi",
       body: event.data.text(),
@@ -91,8 +85,6 @@ self.addEventListener("push", (event) => {
 
 // Event listener untuk notification click
 self.addEventListener("notificationclick", (event) => {
-  console.log("[Service Worker] Notification clicked:", event);
-
   const { action, notification } = event;
   const { data } = notification;
   const url = data?.url || "/";
@@ -127,14 +119,11 @@ self.addEventListener("notificationclick", (event) => {
 
 // Event listener untuk notification close
 self.addEventListener("notificationclose", (event) => {
-  console.log("[Service Worker] Notification closed:", event);
   // Bisa track analytics tentang dismissed notifications
 });
 
 // Event listener untuk background sync (optional)
 self.addEventListener("sync", (event) => {
-  console.log("[Service Worker] Background sync:", event.tag);
-
   if (event.tag === "sync-notifications") {
     event.waitUntil(syncNotifications());
   }
@@ -145,15 +134,5 @@ self.addEventListener("sync", (event) => {
  * Dipanggil saat browser memiliki koneksi internet kembali
  */
 async function syncNotifications() {
-  try {
-    console.log("[Service Worker] Syncing notifications...");
-    // Add your sync logic here
-  } catch (error) {
-    console.error("[Service Worker] Error during sync:", error);
-  }
+  // Add your sync logic here
 }
-
-// Fetch handler removed - not needed for push notifications only
-// Add back if you need caching strategies
-
-console.log("[Service Worker] Loaded successfully");

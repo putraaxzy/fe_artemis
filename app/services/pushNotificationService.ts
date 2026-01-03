@@ -46,8 +46,7 @@ export class PushNotificationService {
    * Get VAPID public key dari server
    */
   static async getVapidPublicKey(): Promise<string> {
-    const baseUrl = API_BASE_URL.replace(/\/api$/, '');
-    const response = await fetch(`${baseUrl}/vapid-key`);
+    const response = await fetch(`${API_BASE_URL}/notifications/vapid-key`);
 
     if (!response.ok) {
       throw new Error("Gagal mengambil VAPID public key");
@@ -62,7 +61,6 @@ export class PushNotificationService {
    */
   static async subscribe(): Promise<boolean> {
     if (!this.isSupported()) {
-      console.warn("Push notification tidak didukung di browser ini");
       return false;
     }
 
@@ -70,7 +68,6 @@ export class PushNotificationService {
       // Request permission
       const permission = await this.requestPermission();
       if (permission !== "granted") {
-        console.log("User rejected push notification permission");
         return false;
       }
 
@@ -79,8 +76,6 @@ export class PushNotificationService {
         "/service-worker.js",
         { scope: "/" }
       );
-
-      console.log("Service Worker registered successfully");
 
       // Get VAPID public key
       const vapidPublicKey = await this.getVapidPublicKey();
@@ -91,26 +86,71 @@ export class PushNotificationService {
 
       // VAPID key sudah dalam format URL-safe base64 dari backend
       // Panjang yang benar adalah sekitar 87 karakter (65 bytes raw data)
-      console.log("Using VAPID key length:", vapidPublicKey.length);
       
       if (vapidPublicKey.length < 80 || vapidPublicKey.length > 90) {
-        console.warn("VAPID key length tidak sesuai. Expected ~87 chars, got:", vapidPublicKey.length);
-        console.warn("Pastikan run: php artisan vapid:keys --force");
+        // Invalid VAPID key length
       }
 
-      // Subscribe ke push manager
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
-      });
+      // Check if there's an existing subscription and unsubscribe first
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        try {
+          // Try to use existing subscription
+          await this.sendSubscriptionToServer(existingSubscription);
+          return true;
+        } catch (e) {
+          await existingSubscription.unsubscribe();
+        }
+      }
+
+      // Wait for service worker to be fully active
+      if (registration.active?.state !== 'activated') {
+        await new Promise<void>((resolve) => {
+          if (registration.active?.state === 'activated') {
+            resolve();
+            return;
+          }
+          registration.active?.addEventListener('statechange', () => {
+            if (registration.active?.state === 'activated') {
+              resolve();
+            }
+          });
+          // Fallback timeout
+          setTimeout(resolve, 1000);
+        });
+      }
+
+      // Subscribe ke push manager with retry
+      let subscription: PushSubscription | null = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while (!subscription && attempts < maxAttempts) {
+        attempts++;
+        try {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
+          });
+        } catch (err: any) {
+          if (attempts < maxAttempts) {
+            // Wait before retry
+            await new Promise(r => setTimeout(r, 1000 * attempts));
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      if (!subscription) {
+        throw new Error("Failed to create push subscription after retries");
+      }
 
       // Send subscription ke server
       await this.sendSubscriptionToServer(subscription);
 
-      console.log("Push notification subscribed successfully");
       return true;
-    } catch (error) {
-      console.error("Error subscribing to push notifications:", error);
+    } catch (error: any) {
       return false;
     }
   }
@@ -129,12 +169,11 @@ export class PushNotificationService {
         await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        console.log("No active push subscription found");
         return false;
       }
 
       // Send unsubscribe ke server
-      await fetch(`${API_BASE_URL}/api/notifications/unsubscribe`, {
+      await fetch(`${API_BASE_URL}/notifications/unsubscribe`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,10 +186,8 @@ export class PushNotificationService {
 
       // Unsubscribe dari push manager
       const unsubscribed = await subscription.unsubscribe();
-      console.log("Push notification unsubscribed:", unsubscribed);
       return unsubscribed;
     } catch (error) {
-      console.error("Error unsubscribing from push notifications:", error);
       return false;
     }
   }
@@ -169,7 +206,6 @@ export class PushNotificationService {
         await registration.pushManager.getSubscription();
       return !!subscription;
     } catch (error) {
-      console.error("Error checking subscription status:", error);
       return false;
     }
   }
@@ -180,7 +216,7 @@ export class PushNotificationService {
   static async getSubscriptionCount(): Promise<number> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/notifications/subscriptions-count`,
+        `${API_BASE_URL}/notifications/subscriptions-count`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -195,7 +231,6 @@ export class PushNotificationService {
       const data = await response.json();
       return data.subscriptions_count || 0;
     } catch (error) {
-      console.error("Error getting subscription count:", error);
       return 0;
     }
   }
@@ -208,7 +243,7 @@ export class PushNotificationService {
   ): Promise<void> {
     const subscriptionJSON = subscription.toJSON() as PushSubscriptionJSON;
 
-    const response = await fetch(`${API_BASE_URL}/api/notifications/subscribe`, {
+    const response = await fetch(`${API_BASE_URL}/notifications/subscribe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -251,7 +286,7 @@ export class PushNotificationService {
    */
   static async sendTestNotification(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notifications/test`, {
+      const response = await fetch(`${API_BASE_URL}/notifications/test`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -266,7 +301,6 @@ export class PushNotificationService {
       const data = await response.json();
       return data.success;
     } catch (error) {
-      console.error("Error sending test notification:", error);
       return false;
     }
   }

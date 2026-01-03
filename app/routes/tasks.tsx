@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { taskService, type Task } from "../services";
 import { useAuth } from "../hooks";
+import { useRealtimeNotifications } from "../hooks/useRealtimeNotifications";
 import { Header, Card, Alert, Button } from "../components";
 import {
   MdTask,
@@ -33,8 +34,10 @@ export default function Tasks() {
     user,
     isLoading: authLoading,
   } = useAuth();
+  
+  const { lastNotification } = useRealtimeNotifications();
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await taskService.getTasks();
@@ -53,7 +56,14 @@ export default function Tasks() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Auto-refresh when new notification comes in
+  useEffect(() => {
+    if (lastNotification && (lastNotification.type === 'task_created' || lastNotification.type === 'task_submitted')) {
+      fetchTasks();
+    }
+  }, [lastNotification, fetchTasks]);
 
   useEffect(() => {
     if (authLoading) {
