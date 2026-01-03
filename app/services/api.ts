@@ -35,7 +35,7 @@ export interface Task {
   file_detail?: string;
   target: "siswa" | "kelas";
   id_target: any[];
-  tipe_pengumpulan: "link" | "langsung";
+  tipe_pengumpulan: "link" | "langsung" | "pemberitahuan";
   tanggal_mulai: string;
   tanggal_deadline: string;
   tampilkan_nilai: boolean;

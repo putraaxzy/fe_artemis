@@ -11,6 +11,7 @@ import {
   MdEdit,
   MdDelete,
   MdWarning,
+  MdCheckCircle,
 } from "react-icons/md";
 
 export function meta() {
@@ -34,7 +35,7 @@ export default function Tasks() {
     user,
     isLoading: authLoading,
   } = useAuth();
-  
+
   const { lastNotification } = useRealtimeNotifications();
 
   const fetchTasks = useCallback(async () => {
@@ -241,7 +242,7 @@ export default function Tasks() {
                           <div className="flex justify-between">
                             <span>Guru:</span>
                             <span className="font-semibold text-gray-900">
-                              {task.guru || "N/A"}
+                              {typeof task.guru === 'object' ? task.guru?.name : task.guru || "N/A"}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -251,6 +252,11 @@ export default function Tasks() {
                                 <>
                                   <MdLink className="w-4 h-4" />
                                   Online
+                                </>
+                              ) : task.tipe_pengumpulan === "pemberitahuan" ? (
+                                <>
+                                  <MdCheckCircle className="w-4 h-4" />
+                                  Info
                                 </>
                               ) : (
                                 <>

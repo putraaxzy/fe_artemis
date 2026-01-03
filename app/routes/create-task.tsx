@@ -30,7 +30,7 @@ export default function CreateTask() {
     judul: "",
     deskripsi: "",
     target: "kelas" as "siswa" | "kelas",
-    tipe_pengumpulan: "link" as "link" | "langsung",
+    tipe_pengumpulan: "link" as "link" | "langsung" | "pemberitahuan",
     tanggal_mulai: "",
     tanggal_deadline: "",
     tampilkan_nilai: false,
@@ -112,6 +112,13 @@ export default function CreateTask() {
       setFormData((prev) => ({
         ...prev,
         [name]: checked,
+      }));
+    } else if (name === "tipe_pengumpulan" && value === "pemberitahuan") {
+      // Jika tipe pemberitahuan, otomatis set tampilkan_nilai = false
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        tampilkan_nilai: false,
       }));
     } else {
       setFormData((prev) => ({
@@ -290,9 +297,9 @@ export default function CreateTask() {
       const normalizedIdTarget =
         formData.target === "kelas"
           ? selectedClasses.map((c) => ({
-              kelas: c.kelas.toUpperCase().trim(),
-              jurusan: c.jurusan.toUpperCase().trim(),
-            }))
+            kelas: c.kelas.toUpperCase().trim(),
+            jurusan: c.jurusan.toUpperCase().trim(),
+          }))
           : selectedStudents;
 
       const payload: any = {
@@ -588,15 +595,15 @@ export default function CreateTask() {
                         {options.kelas?.map((kelas) => {
                           // Gunakan jurusan_by_kelas jika tersedia, fallback ke jurusan
                           const jurusanList = options.jurusan_by_kelas?.[kelas] || options.jurusan || [];
-                          
+
                           const totalStudents = jurusanList.reduce(
                             (sum, jurusan) => {
                               const kelasInfo = availableKelas?.find(
                                 (k) =>
                                   k.kelas?.toUpperCase() ===
-                                    kelas.toUpperCase() &&
+                                  kelas.toUpperCase() &&
                                   k.jurusan?.toUpperCase() ===
-                                    jurusan.toUpperCase()
+                                  jurusan.toUpperCase()
                               );
                               return sum + (kelasInfo?.jumlah_siswa || 0);
                             },
@@ -618,9 +625,9 @@ export default function CreateTask() {
                                   const kelasInfo = availableKelas?.find(
                                     (k) =>
                                       k.kelas?.toUpperCase() ===
-                                        kelas.toUpperCase() &&
+                                      kelas.toUpperCase() &&
                                       k.jurusan?.toUpperCase() ===
-                                        jurusan.toUpperCase()
+                                      jurusan.toUpperCase()
                                   );
                                   const studentCount =
                                     kelasInfo?.jumlah_siswa || 0;
@@ -649,20 +656,18 @@ export default function CreateTask() {
                                         className="w-4 h-4 text-gray-900 rounded focus:ring-2 focus:ring-gray-900"
                                       />
                                       <span
-                                        className={`flex-1 font-medium ${
-                                          hasWarning
-                                            ? "text-orange-600"
-                                            : "text-gray-700"
-                                        }`}
+                                        className={`flex-1 font-medium ${hasWarning
+                                          ? "text-orange-600"
+                                          : "text-gray-700"
+                                          }`}
                                       >
                                         {jurusan}
                                       </span>
                                       <span
-                                        className={`text-xs whitespace-nowrap ${
-                                          hasWarning
-                                            ? "text-orange-500"
-                                            : "text-gray-500"
-                                        }`}
+                                        className={`text-xs whitespace-nowrap ${hasWarning
+                                          ? "text-orange-500"
+                                          : "text-gray-500"
+                                          }`}
                                       >
                                         ({studentCount})
                                       </span>
@@ -836,6 +841,25 @@ export default function CreateTask() {
                       </p>
                     </div>
                   </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tipe_pengumpulan"
+                      value="pemberitahuan"
+                      checked={formData.tipe_pengumpulan === "pemberitahuan"}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      className="w-4 h-4"
+                    />
+                    <div>
+                      <span className="text-gray-700 font-medium">
+                        Pemberitahuan / Info
+                      </span>
+                      <p className="text-xs text-gray-500">
+                        Hanya informasi, tidak ada penilaian (Otomatis tanpa nilai)
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
 
@@ -876,7 +900,7 @@ export default function CreateTask() {
                   name="tampilkan_nilai"
                   checked={formData.tampilkan_nilai}
                   onChange={handleChange}
-                  disabled={isLoading}
+                  disabled={isLoading || formData.tipe_pengumpulan === "pemberitahuan"}
                   className="w-4 h-4"
                 />
                 <div>

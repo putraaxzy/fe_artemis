@@ -28,6 +28,7 @@ import {
   MdDownload,
   MdWarning,
   MdSend,
+  MdInfo,
 } from "react-icons/md";
 import { FaUserGraduate } from "react-icons/fa";
 import { ConfirmModal } from "../components/Modal";
@@ -120,6 +121,8 @@ export default function TaskDetail() {
       setSubmitError("Harap masukkan link Google Drive");
       return;
     }
+
+
 
     setShowConfirmModal(true);
   };
@@ -279,9 +282,13 @@ export default function TaskDetail() {
         isOpen={showConfirmModal}
         onConfirm={processTaskSubmission}
         onCancel={() => setShowConfirmModal(false)}
-        title="Konfirmasi Pengumpulan"
-        message="Apakah Anda yakin ingin mengumpulkan tugas ini? Pastikan semua data sudah benar karena tugas yang sudah dikumpulkan tidak dapat diubah (kecuali diminta revisi oleh guru)."
-        confirmText="Ya, Kumpulkan"
+        title={task?.tipe_pengumpulan === "pemberitahuan" ? "Konfirmasi Baca" : "Konfirmasi Pengumpulan"}
+        message={
+          task?.tipe_pengumpulan === "pemberitahuan"
+            ? "Apakah Anda yakin sudah membaca dan memahami pemberitahuan ini?"
+            : "Apakah Anda yakin ingin mengumpulkan tugas ini? Pastikan semua data sudah benar karena tugas yang sudah dikumpulkan tidak dapat diubah (kecuali diminta revisi oleh guru)."
+        }
+        confirmText={task?.tipe_pengumpulan === "pemberitahuan" ? "Ya, Saya Sudah Baca" : "Ya, Kumpulkan"}
         cancelText="Batal"
       />
       <main className="min-h-screen bg-white">
@@ -351,6 +358,11 @@ export default function TaskDetail() {
                     <>
                       <MdLink className="w-5 h-5 flex-shrink-0" />
                       <span className="truncate">Online</span>
+                    </>
+                  ) : task.tipe_pengumpulan === "pemberitahuan" ? (
+                    <>
+                      <MdInfo className="w-5 h-5 flex-shrink-0" />
+                      <span className="truncate">Info</span>
                     </>
                   ) : (
                     <>
@@ -431,158 +443,158 @@ export default function TaskDetail() {
             task.file_detail ||
             task.tanggal_mulai ||
             task.tanggal_deadline) && (
-            <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <MdDescription className="text-2xl text-gray-700" />
-                Detail Tugas
-              </h2>
-              <div className="space-y-6">
-                {task.deskripsi && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                      Deskripsi
-                    </p>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                      <p className="text-gray-900 whitespace-pre-wrap break-words leading-relaxed">
-                        {task.deskripsi}
+              <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <MdDescription className="text-2xl text-gray-700" />
+                  Detail Tugas
+                </h2>
+                <div className="space-y-6">
+                  {task.deskripsi && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                        Deskripsi
                       </p>
-                    </div>
-                  </div>
-                )}
-
-                {(task.tanggal_mulai || task.tanggal_deadline) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {task.tanggal_mulai && (
                       <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-1">
-                          <MdRocketLaunch className="text-base" /> Mulai
-                        </p>
-                        <p className="text-gray-900 font-medium">
-                          {new Date(task.tanggal_mulai).toLocaleString(
-                            "id-ID",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                        <p className="text-gray-900 whitespace-pre-wrap break-words leading-relaxed">
+                          {task.deskripsi}
                         </p>
                       </div>
-                    )}
-                    {task.tanggal_deadline && (
-                      <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                        <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2 flex items-center gap-1">
-                          <MdTimer className="text-base" /> Deadline
-                        </p>
-                        <p className="text-red-900 font-bold">
-                          {new Date(task.tanggal_deadline).toLocaleString(
-                            "id-ID",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
+                    </div>
+                  )}
+
+                  {(task.tanggal_mulai || task.tanggal_deadline) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {task.tanggal_mulai && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                            <MdRocketLaunch className="text-base" /> Mulai
+                          </p>
+                          <p className="text-gray-900 font-medium">
+                            {new Date(task.tanggal_mulai).toLocaleString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {task.tanggal_deadline && (
+                        <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+                            <MdTimer className="text-base" /> Deadline
+                          </p>
+                          <p className="text-red-900 font-bold">
+                            {new Date(task.tanggal_deadline).toLocaleString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {task.file_detail &&
+                    (() => {
+                      const fileUrl = `https://engine.ptraazxtt.my.id/storage/${task.file_detail}`;
+                      const fileName =
+                        task.file_detail.split("/").pop() || "file";
+                      const fileExt =
+                        fileName.split(".").pop()?.toLowerCase() || "";
+
+                      const imageFormats = [
+                        "jpg",
+                        "jpeg",
+                        "png",
+                        "gif",
+                        "webp",
+                        "svg",
+                        "bmp",
+                      ];
+                      const videoFormats = [
+                        "mp4",
+                        "webm",
+                        "ogg",
+                        "mov",
+                        "avi",
+                        "mkv",
+                      ];
+                      const audioFormats = ["mp3", "wav", "ogg", "aac", "m4a"];
+
+                      return (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-1">
+                            <MdAttachFile className="text-base" /> File Lampiran
+                          </p>
+
+                          {imageFormats.includes(fileExt) && (
+                            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                              <img
+                                src={fileUrl}
+                                alt="Task attachment"
+                                className="w-full h-auto max-w-full object-contain"
+                              />
+                            </div>
                           )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {task.file_detail &&
-                  (() => {
-                    const fileUrl = `https://engine.ptraazxtt.my.id/storage/${task.file_detail}`;
-                    const fileName =
-                      task.file_detail.split("/").pop() || "file";
-                    const fileExt =
-                      fileName.split(".").pop()?.toLowerCase() || "";
-
-                    const imageFormats = [
-                      "jpg",
-                      "jpeg",
-                      "png",
-                      "gif",
-                      "webp",
-                      "svg",
-                      "bmp",
-                    ];
-                    const videoFormats = [
-                      "mp4",
-                      "webm",
-                      "ogg",
-                      "mov",
-                      "avi",
-                      "mkv",
-                    ];
-                    const audioFormats = ["mp3", "wav", "ogg", "aac", "m4a"];
-
-                    return (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-1">
-                          <MdAttachFile className="text-base" /> File Lampiran
-                        </p>
-
-                        {imageFormats.includes(fileExt) && (
-                          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                            <img
-                              src={fileUrl}
-                              alt="Task attachment"
-                              className="w-full h-auto max-w-full object-contain"
-                            />
-                          </div>
-                        )}
-
-                        {videoFormats.includes(fileExt) && (
-                          <div className="bg-black rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                            <video
-                              controls
-                              className="w-full h-auto max-w-full"
-                              preload="metadata"
-                            >
-                              <source src={fileUrl} type={`video/${fileExt}`} />
-                              Browser Anda tidak mendukung video player.
-                            </video>
-                          </div>
-                        )}
-
-                        {audioFormats.includes(fileExt) && (
-                          <div className="bg-gray-50 rounded-xl p-6 shadow-sm border border-gray-200">
-                            <audio
-                              controls
-                              className="w-full"
-                              preload="metadata"
-                            >
-                              <source src={fileUrl} type={`audio/${fileExt}`} />
-                              Browser Anda tidak mendukung audio player.
-                            </audio>
-                            <p className="text-sm text-gray-600 mt-3 text-center flex items-center justify-center gap-2">
-                              <MdAudiotrack /> {fileName}
-                            </p>
-                          </div>
-                        )}
-
-                        {!imageFormats.includes(fileExt) &&
-                          !videoFormats.includes(fileExt) &&
-                          !audioFormats.includes(fileExt) && (
-                            <a
-                              href={fileUrl}
-                              download
-                              className="inline-flex items-center gap-3 px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 hover:shadow-md transition-all font-medium"
-                            >
-                              <MdDownload className="w-5 h-5" />
-                              Download {fileName}
-                            </a>
+                          {videoFormats.includes(fileExt) && (
+                            <div className="bg-black rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                              <video
+                                controls
+                                className="w-full h-auto max-w-full"
+                                preload="metadata"
+                              >
+                                <source src={fileUrl} type={`video/${fileExt}`} />
+                                Browser Anda tidak mendukung video player.
+                              </video>
+                            </div>
                           )}
-                      </div>
-                    );
-                  })()}
+
+                          {audioFormats.includes(fileExt) && (
+                            <div className="bg-gray-50 rounded-xl p-6 shadow-sm border border-gray-200">
+                              <audio
+                                controls
+                                className="w-full"
+                                preload="metadata"
+                              >
+                                <source src={fileUrl} type={`audio/${fileExt}`} />
+                                Browser Anda tidak mendukung audio player.
+                              </audio>
+                              <p className="text-sm text-gray-600 mt-3 text-center flex items-center justify-center gap-2">
+                                <MdAudiotrack /> {fileName}
+                              </p>
+                            </div>
+                          )}
+
+                          {!imageFormats.includes(fileExt) &&
+                            !videoFormats.includes(fileExt) &&
+                            !audioFormats.includes(fileExt) && (
+                              <a
+                                href={fileUrl}
+                                download
+                                className="inline-flex items-center gap-3 px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 hover:shadow-md transition-all font-medium"
+                              >
+                                <MdDownload className="w-5 h-5" />
+                                Download {fileName}
+                              </a>
+                            )}
+                        </div>
+                      );
+                    })()}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Guru View - Statistics */}
           {isGuru && (
@@ -592,38 +604,63 @@ export default function TaskDetail() {
                 Statistik Pengumpulan
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 hover:shadow-sm transition-shadow">
-                  <p className="text-xs text-gray-600 font-semibold uppercase mb-2">
-                    Menunggu
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {task.statistik.pending}
-                  </p>
-                </div>
-                <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 hover:shadow-sm transition-shadow">
-                  <p className="text-xs text-blue-700 font-semibold uppercase mb-2">
-                    Dikirim
-                  </p>
-                  <p className="text-3xl font-bold text-blue-900">
-                    {task.statistik.dikirim}
-                  </p>
-                </div>
-                <div className="bg-green-50 p-5 rounded-xl border border-green-200 hover:shadow-sm transition-shadow">
-                  <p className="text-xs text-green-700 font-semibold uppercase mb-2">
-                    Selesai
-                  </p>
-                  <p className="text-3xl font-bold text-green-900">
-                    {task.statistik.selesai}
-                  </p>
-                </div>
-                <div className="bg-red-50 p-5 rounded-xl border border-red-200 hover:shadow-sm transition-shadow">
-                  <p className="text-xs text-red-700 font-semibold uppercase mb-2">
-                    Ditolak
-                  </p>
-                  <p className="text-3xl font-bold text-red-900">
-                    {task.statistik.ditolak}
-                  </p>
-                </div>
+                {task.tipe_pengumpulan === "pemberitahuan" ? (
+                  <>
+                    {/* Pemberitahuan Stats - Only 2 cards */}
+                    <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 hover:shadow-sm transition-shadow">
+                      <p className="text-xs text-gray-600 font-semibold uppercase mb-2">
+                        Belum Membaca
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {task.statistik.pending}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 hover:shadow-sm transition-shadow">
+                      <p className="text-xs text-blue-700 font-semibold uppercase mb-2">
+                        Sudah Membaca
+                      </p>
+                      <p className="text-3xl font-bold text-blue-900">
+                        {task.statistik.selesai}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Regular Task Stats */}
+                    <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 hover:shadow-sm transition-shadow">
+                      <p className="text-xs text-gray-600 font-semibold uppercase mb-2">
+                        Menunggu
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {task.statistik.pending}
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 hover:shadow-sm transition-shadow">
+                      <p className="text-xs text-blue-700 font-semibold uppercase mb-2">
+                        Dikirim
+                      </p>
+                      <p className="text-3xl font-bold text-blue-900">
+                        {task.statistik.dikirim}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 p-5 rounded-xl border border-green-200 hover:shadow-sm transition-shadow">
+                      <p className="text-xs text-green-700 font-semibold uppercase mb-2">
+                        Selesai
+                      </p>
+                      <p className="text-3xl font-bold text-green-900">
+                        {task.statistik.selesai}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 p-5 rounded-xl border border-red-200 hover:shadow-sm transition-shadow">
+                      <p className="text-xs text-red-700 font-semibold uppercase mb-2">
+                        Ditolak
+                      </p>
+                      <p className="text-3xl font-bold text-red-900">
+                        {task.statistik.ditolak}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -632,16 +669,25 @@ export default function TaskDetail() {
           {isSiswa && task.penugasan && task.penugasan[0] && (
             <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                {task.penugasan[0].status === "selesai" ? (
-                  <MdCheckCircle className="text-3xl text-green-600" />
-                ) : task.penugasan[0].status === "ditolak" ? (
-                  <MdCancel className="text-3xl text-gray-900" />
-                ) : task.penugasan[0].status === "dikirim" ? (
-                  <MdSchedule className="text-3xl text-blue-600" />
+                {task.tipe_pengumpulan === "pemberitahuan" ? (
+                  <>
+                    <MdInfo className="text-3xl text-blue-600" />
+                    Status Informasi
+                  </>
                 ) : (
-                  <MdAssignment className="text-3xl text-gray-700" />
+                  <>
+                    {task.penugasan[0].status === "selesai" ? (
+                      <MdCheckCircle className="text-3xl text-green-600" />
+                    ) : task.penugasan[0].status === "ditolak" ? (
+                      <MdCancel className="text-3xl text-gray-900" />
+                    ) : task.penugasan[0].status === "dikirim" ? (
+                      <MdSchedule className="text-3xl text-blue-600" />
+                    ) : (
+                      <MdAssignment className="text-3xl text-gray-700" />
+                    )}
+                    Status Pengumpulan
+                  </>
                 )}
-                Status Pengumpulan
               </h2>
 
               {/* Rejection Alert - Prominent at Top */}
@@ -667,26 +713,33 @@ export default function TaskDetail() {
               <div className="mb-6 bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-700">
-                    Status Tugas
+                    {task.tipe_pengumpulan === "pemberitahuan" ? "Status" : "Status Tugas"}
                   </span>
                   <span
-                    className={`px-4 py-2 rounded-full text-xs font-bold ${
-                      task.penugasan[0].status === "pending"
+                    className={`px-4 py-2 rounded-full text-xs font-bold ${task.tipe_pengumpulan === "pemberitahuan"
+                      ? task.penugasan[0].status === "selesai"
+                        ? "bg-blue-100 text-blue-800 border border-blue-300"
+                        : "bg-gray-100 text-gray-800 border border-gray-300"
+                      : task.penugasan[0].status === "pending"
                         ? "bg-gray-100 text-gray-800 border border-gray-300"
                         : task.penugasan[0].status === "dikirim"
                           ? "bg-blue-100 text-blue-800 border border-blue-300"
                           : task.penugasan[0].status === "selesai"
                             ? "bg-green-100 text-green-800 border border-green-300"
                             : "bg-red-100 text-red-800 border border-red-300"
-                    }`}
+                      }`}
                   >
-                    {task.penugasan[0].status === "pending"
-                      ? "Belum Dikumpulkan"
-                      : task.penugasan[0].status === "dikirim"
-                        ? "Menunggu Penilaian"
-                        : task.penugasan[0].status === "selesai"
-                          ? "Diterima"
-                          : "Ditolak"}
+                    {task.tipe_pengumpulan === "pemberitahuan"
+                      ? task.penugasan[0].status === "selesai"
+                        ? "Sudah Dibaca"
+                        : "Belum Dibaca"
+                      : task.penugasan[0].status === "pending"
+                        ? "Belum Dikumpulkan"
+                        : task.penugasan[0].status === "dikirim"
+                          ? "Menunggu Penilaian"
+                          : task.penugasan[0].status === "selesai"
+                            ? "Diterima"
+                            : "Ditolak"}
                   </span>
                 </div>
 
@@ -740,13 +793,12 @@ export default function TaskDetail() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                         <div
-                          className={`h-3 rounded-full transition-all ${
-                            task.penugasan[0].nilai >= 75
-                              ? "bg-green-500"
-                              : task.penugasan[0].nilai >= 60
+                          className={`h-3 rounded-full transition-all ${task.penugasan[0].nilai >= 75
+                            ? "bg-green-500"
+                            : task.penugasan[0].nilai >= 60
                               ? "bg-yellow-500"
                               : "bg-red-500"
-                          }`}
+                            }`}
                           style={{ width: `${task.penugasan[0].nilai}%` }}
                         />
                       </div>
@@ -767,65 +819,83 @@ export default function TaskDetail() {
                 )}
               </div>
 
+              {task.tipe_pengumpulan === "pemberitahuan" && task.penugasan[0].status === "selesai" && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    <MdCheckCircle className="text-blue-600 text-lg" />
+                    Anda telah mengkonfirmasi membaca informasi ini pada {new Date(task.penugasan[0].tanggal_pengumpulan || "").toLocaleString("id-ID")}
+                  </p>
+                </div>
+              )}
+
               {/* Submit form - show if pending or rejected (for resubmission) */}
               {(task.penugasan[0].status === "pending" ||
                 task.penugasan[0].status === "ditolak") && (
-                <>
-                  {submitSuccess && (
-                    <Alert
-                      type="success"
-                      message="Tugas berhasil dikumpulkan! Mengalihkan..."
-                      className="mb-4"
-                    />
-                  )}
-
-                  {submitError && (
-                    <Alert
-                      type="error"
-                      message={submitError}
-                      onClose={() => setSubmitError("")}
-                      className="mb-4"
-                    />
-                  )}
-
-                  <form onSubmit={handleSubmitTask} className="space-y-4">
-                    {task.tipe_pengumpulan === "link" && (
-                      <Input
-                        label="Link Google Drive"
-                        type="url"
-                        placeholder="https://drive.google.com/file/d/..."
-                        value={linkDrive}
-                        onChange={(e) => setLinkDrive(e.target.value)}
-                        required
-                        disabled={isSubmitting}
-                        helperText="Tempelkan link Google Drive Anda di sini"
+                  <>
+                    {submitSuccess && (
+                      <Alert
+                        type="success"
+                        message="Tugas berhasil dikumpulkan! Mengalihkan..."
+                        className="mb-4"
                       />
                     )}
 
-                    <Button
-                      type="submit"
-                      isLoading={isSubmitting}
-                      className="w-full bg-gray-900 hover:bg-gray-800 shadow-sm flex items-center justify-center gap-2"
-                    >
-                      {task.tipe_pengumpulan === "link" ? (
-                        <>
-                          <MdLink className="w-5 h-5" />
-                          {task.penugasan[0].status === "ditolak"
-                            ? "Kirim Ulang"
-                            : "Kirim Tugas"}
-                        </>
-                      ) : (
-                        <>
-                          <MdSend className="w-5 h-5" />
-                          {task.penugasan[0].status === "ditolak"
-                            ? "Konfirmasi Pengumpulan Ulang"
-                            : "Konfirmasi Pengumpulan"}
-                        </>
+                    {submitError && (
+                      <Alert
+                        type="error"
+                        message={submitError}
+                        onClose={() => setSubmitError("")}
+                        className="mb-4"
+                      />
+                    )}
+
+                    <form onSubmit={handleSubmitTask} className="space-y-4">
+                      {task.tipe_pengumpulan === "link" && (
+                        <Input
+                          label="Link Google Drive"
+                          type="url"
+                          placeholder="https://drive.google.com/file/d/..."
+                          value={linkDrive}
+                          onChange={(e) => setLinkDrive(e.target.value)}
+                          required
+                          disabled={isSubmitting}
+                          helperText="Tempelkan link Google Drive Anda di sini"
+                        />
                       )}
-                    </Button>
-                  </form>
-                </>
-              )}
+
+                      {task.tipe_pengumpulan === "pemberitahuan" && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                          <p className="text-blue-800 text-sm flex items-center gap-2">
+                            <MdCheckCircle className="text-lg" />
+                            Ini adalah pemberitahuan. Klik tombol di bawah untuk konfirmasi Anda sudah membacanya.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          type="submit"
+                          isLoading={isSubmitting}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2"
+                        >
+                          {task.tipe_pengumpulan === "pemberitahuan" ? (
+                            <>
+                              <MdCheck className="text-lg" />
+                              Tandai Sudah Dibaca
+                            </>
+                          ) : (
+                            <>
+                              <MdSend className="text-lg" />
+                              Kumpulkan Tugas
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+
+
+                  </>
+                )}
 
               {/* Message if already submitted */}
               {task.penugasan[0].status === "dikirim" && (
@@ -852,7 +922,7 @@ export default function TaskDetail() {
             <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-200">
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <MdPeople className="text-3xl text-blue-600" />
-                Pengumpulan Siswa (
+                {task.tipe_pengumpulan === "pemberitahuan" ? "Daftar Pembaca" : "Pengumpulan Siswa"} (
                 {
                   task.penugasan.filter(
                     (p) =>
@@ -924,15 +994,32 @@ export default function TaskDetail() {
 
                         <div className="flex items-center gap-3">
                           <span
-                            className={`px-4 py-2 rounded-full text-xs font-bold shadow-sm flex items-center gap-1 ${getStatusColor(penugasan.status)}`}
+                            className={`px-4 py-2 rounded-full text-xs font-bold shadow-sm flex items-center gap-1 ${task.tipe_pengumpulan === "pemberitahuan"
+                              ? penugasan.status === "selesai"
+                                ? "bg-blue-100 text-blue-800 border border-blue-300"
+                                : "bg-gray-100 text-gray-800 border border-gray-300"
+                              : getStatusColor(penugasan.status)
+                              }`}
                           >
-                            {penugasan.status === "selesai" ? (
-                              <MdCheck className="w-4 h-4" />
-                            ) : penugasan.status === "ditolak" ? (
-                              <MdCancel className="w-4 h-4 text-gray-900" />
-                            ) : null}
-                            {penugasan.status.charAt(0).toUpperCase() +
-                              penugasan.status.slice(1)}
+                            {task.tipe_pengumpulan === "pemberitahuan" ? (
+                              penugasan.status === "selesai" ? (
+                                <>
+                                  <MdCheck className="w-4 h-4" /> Sudah Membaca
+                                </>
+                              ) : (
+                                "Belum Membaca"
+                              )
+                            ) : (
+                              <>
+                                {penugasan.status === "selesai" ? (
+                                  <MdCheck className="w-4 h-4" />
+                                ) : penugasan.status === "ditolak" ? (
+                                  <MdCancel className="w-4 h-4 text-gray-900" />
+                                ) : null}
+                                {penugasan.status.charAt(0).toUpperCase() +
+                                  penugasan.status.slice(1)}
+                              </>
+                            )}
                           </span>
 
                           {penugasan.link_drive && (
@@ -948,9 +1035,9 @@ export default function TaskDetail() {
                         </div>
                       </div>
 
-                      {/* Grade Display or Form */}
-                      {penugasan.status === "dikirim" &&
-                      gradingPenugasanId === penugasan.id ? (
+                      {/* Grade Display or Form - Disable for Pemberitahuan */}
+                      {task.tipe_pengumpulan !== "pemberitahuan" && penugasan.status === "dikirim" &&
+                        gradingPenugasanId === penugasan.id ? (
                         <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
                           <h4 className="font-bold text-gray-900 flex items-center gap-2">
                             <MdDescription /> Berikan Penilaian
@@ -1034,7 +1121,7 @@ export default function TaskDetail() {
                             </div>
                           </div>
                         </div>
-                      ) : penugasan.status === "dikirim" ? (
+                      ) : task.tipe_pengumpulan !== "pemberitahuan" && penugasan.status === "dikirim" ? (
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <Button
                             size="sm"
@@ -1048,53 +1135,52 @@ export default function TaskDetail() {
 
                       {(penugasan.nilai !== undefined ||
                         penugasan.catatan_guru) && (
-                        <div className="mt-3 pt-3 border-t border-gray-200 bg-gray-50/50 rounded-lg p-4">
-                          {penugasan.nilai !== undefined && (
-                            <div className="mb-3">
-                              <p className="text-sm text-gray-600 mb-1">
-                                Nilai:
-                              </p>
-                              <div className="flex items-center gap-3">
-                                <span className="text-2xl font-bold text-gray-900">
-                                  {penugasan.nilai}
-                                  <span className="text-base text-gray-600">
-                                    /100
+                          <div className="mt-3 pt-3 border-t border-gray-200 bg-gray-50/50 rounded-lg p-4">
+                            {penugasan.nilai !== undefined && (
+                              <div className="mb-3">
+                                <p className="text-sm text-gray-600 mb-1">
+                                  Nilai:
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-2xl font-bold text-gray-900">
+                                    {penugasan.nilai}
+                                    <span className="text-base text-gray-600">
+                                      /100
+                                    </span>
                                   </span>
-                                </span>
-                                <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                  <div
-                                    className={`h-2.5 rounded-full ${
-                                      penugasan.nilai >= 75
+                                  <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                    <div
+                                      className={`h-2.5 rounded-full ${penugasan.nilai >= 75
                                         ? "bg-green-500"
                                         : penugasan.nilai >= 60
-                                        ? "bg-yellow-500"
-                                        : "bg-red-500"
-                                    }`}
-                                    style={{ width: `${penugasan.nilai}%` }}
-                                  />
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                        }`}
+                                      style={{ width: `${penugasan.nilai}%` }}
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                          {penugasan.catatan_guru && (
-                            <div>
-                              <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
-                                <MdComment /> Catatan:
-                              </p>
-                              <p className="text-sm text-gray-900 bg-white/70 rounded-lg p-3 border border-gray-200">
-                                {penugasan.catatan_guru}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                            {penugasan.catatan_guru && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
+                                  <MdComment /> Catatan:
+                                </p>
+                                <p className="text-sm text-gray-900 bg-white/70 rounded-lg p-3 border border-gray-200">
+                                  {penugasan.catatan_guru}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                     </div>
                   ))}
               </div>
             </div>
           )}
         </div>
-      </main>
+      </main >
     </>
   );
 }
