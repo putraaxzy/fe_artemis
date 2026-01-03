@@ -33,8 +33,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // Suppress WebSocket connection errors from Echo/Pusher
       window.addEventListener("unhandledrejection", (event) => {
-        if (event.reason?.message?.includes("Could not establish connection")) {
+        const message = event.reason?.message || "";
+        if (
+          message.includes("Could not establish connection") ||
+          message.includes("WebSocket is closed")
+        ) {
           event.preventDefault();
         }
       });

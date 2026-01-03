@@ -58,10 +58,8 @@ export function initializeEcho(authToken?: string): Echo<"reverb"> | null {
     });
 
     window.Echo = echo;
-    console.log("[Echo] Initialized successfully");
     return echo;
   } catch (error) {
-    console.error("[Echo] Failed to initialize:", error);
     return null;
   }
 }

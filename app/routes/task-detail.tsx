@@ -313,7 +313,7 @@ export default function TaskDetail() {
                 </p>
               </div>
               {isGuru && (
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
                   <Button
                     onClick={async () => {
                       try {
@@ -331,12 +331,12 @@ export default function TaskDetail() {
                         alert("Gagal export tugas");
                       }
                     }}
-                    className="flex items-center gap-2 whitespace-nowrap px-3 sm:px-4"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-base font-medium shadow-sm hover:shadow transition-all"
                     variant="secondary"
                     title="Export Excel"
                   >
                     <MdDownload className="w-5 h-5" />
-                    <span className="hidden sm:inline">Export Excel</span>
+                    <span>Export Excel</span>
                   </Button>
                 </div>
               )}
@@ -740,7 +740,13 @@ export default function TaskDetail() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all"
+                          className={`h-3 rounded-full transition-all ${
+                            task.penugasan[0].nilai >= 75
+                              ? "bg-green-500"
+                              : task.penugasan[0].nilai >= 60
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                          }`}
                           style={{ width: `${task.penugasan[0].nilai}%` }}
                         />
                       </div>
@@ -1023,7 +1029,7 @@ export default function TaskDetail() {
                                 disabled={isGrading}
                                 className="shadow-sm"
                               >
-                                ✖️ Batal
+                                Batal
                               </Button>
                             </div>
                           </div>
@@ -1035,7 +1041,7 @@ export default function TaskDetail() {
                             onClick={() => setGradingPenugasanId(penugasan.id)}
                             className="bg-gray-900 hover:bg-gray-800"
                           >
-                            📝 Beri Nilai
+                            Beri Nilai
                           </Button>
                         </div>
                       ) : null}
@@ -1057,7 +1063,13 @@ export default function TaskDetail() {
                                 </span>
                                 <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
                                   <div
-                                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2.5 rounded-full"
+                                    className={`h-2.5 rounded-full ${
+                                      penugasan.nilai >= 75
+                                        ? "bg-green-500"
+                                        : penugasan.nilai >= 60
+                                        ? "bg-yellow-500"
+                                        : "bg-red-500"
+                                    }`}
                                     style={{ width: `${penugasan.nilai}%` }}
                                   />
                                 </div>

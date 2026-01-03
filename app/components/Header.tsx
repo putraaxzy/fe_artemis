@@ -15,6 +15,8 @@ import {
   MdLogout,
   MdArrowUpward,
   MdSettings,
+  MdExplore,
+  MdPerson,
 } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 
@@ -74,6 +76,20 @@ export function Header() {
                       <span>Create Task</span>
                     </Link>
                   )}
+                  <Link
+                    to="/explore"
+                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                  >
+                    <MdExplore className="w-4 h-4" />
+                    <span>Explore</span>
+                  </Link>
+                  <Link
+                    to={`/profile/${user?.id}`}
+                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                  >
+                    <MdPerson className="w-4 h-4" />
+                    <span>Profile</span>
+                  </Link>
                   <Link
                     to="/settings"
                     className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
@@ -204,6 +220,22 @@ export function Header() {
                   </Link>
                 )}
 
+                <Link
+                  to="/explore"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MdExplore className="w-5 h-5" />
+                  <span className="font-medium">Explore</span>
+                </Link>
+                <Link
+                  to={`/profile/${user?.id}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MdPerson className="w-5 h-5" />
+                  <span className="font-medium">Profile</span>
+                </Link>
                 <Link
                   to="/settings"
                   onClick={() => setMobileMenuOpen(false)}

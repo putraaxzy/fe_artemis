@@ -9,4 +9,6 @@ export default [
   route("create-task", "routes/create-task.tsx"),
   route("edit-task/:id", "routes/edit-task.$id.tsx"),
   route("settings", "routes/settings.tsx"),
+  route("profile/:id", "routes/profile.tsx"),
+  route("explore", "routes/explore.tsx"),
 ] satisfies RouteConfig;

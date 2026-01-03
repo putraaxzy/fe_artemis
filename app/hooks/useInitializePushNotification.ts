@@ -7,6 +7,6 @@ import { useEffect } from "react";
 
 export function useInitializePushNotification() {
   useEffect(() => {
-    console.log("Push notification initialization skipped - enable via Settings");
+    // Push notification initialization skipped
   }, []);
 }
