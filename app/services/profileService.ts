@@ -48,10 +48,10 @@ const getAuthHeaders = () => ({
 
 export const profileService = {
   /**
-   * Get user profile by ID
+   * Get user profile by username
    */
-  async getProfile(userId: number): Promise<{ berhasil: boolean; data: UserProfile }> {
-    const response = await fetch(`${API_BASE_URL}/profile/${userId}`, {
+  async getProfile(username: string): Promise<{ berhasil: boolean; data: UserProfile }> {
+    const response = await fetch(`${API_BASE_URL}/profile/${username}`, {
       headers: getAuthHeaders(),
     });
     return response.json();

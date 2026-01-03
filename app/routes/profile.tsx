@@ -104,7 +104,7 @@ function UserCard({ user, onClose }: { user: UserPreview; onClose?: () => void }
     <div 
       onClick={() => {
         onClose?.();
-        navigate(`/profile/${user.id}`);
+        navigate(`/profile/${user.username}`);
       }}
       className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
     >
@@ -299,7 +299,7 @@ function ConnectionsModal({
 
 // Main Profile Component
 export default function Profile() {
-  const { id } = useParams();
+  const { username } = useParams();
   const navigate = useNavigate();
   const { user: currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
   
@@ -316,16 +316,16 @@ export default function Profile() {
   const [bioText, setBioText] = useState("");
   const [bioSaving, setBioSaving] = useState(false);
 
-  const isOwnProfile = currentUser?.id === Number(id);
+  const isOwnProfile = currentUser?.username === username;
 
   const fetchProfile = useCallback(async () => {
-    if (!id) return;
+    if (!username) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await profileService.getProfile(Number(id));
+      const response = await profileService.getProfile(username);
       if (response.berhasil) {
         setProfile(response.data);
         setIsFollowing(response.data.is_following);
@@ -338,7 +338,7 @@ export default function Profile() {
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [username]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -349,7 +349,7 @@ export default function Profile() {
     }
 
     fetchProfile();
-  }, [authLoading, isAuthenticated, id, navigate, fetchProfile]);
+  }, [authLoading, isAuthenticated, username, navigate, fetchProfile]);
 
   const handleFollow = async () => {
     if (!profile) return;

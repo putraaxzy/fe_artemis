@@ -23,7 +23,7 @@ function UserCard({ user }: { user: UserPreview }) {
   
   return (
     <div 
-      onClick={() => navigate(`/profile/${user.id}`)}
+      onClick={() => navigate(`/profile/${user.username}`)}
       className="group bg-white rounded-xl p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 border border-gray-100"
     >
       <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ function FeaturedUserCard({ user }: { user: UserPreview }) {
   
   return (
     <div 
-      onClick={() => navigate(`/profile/${user.id}`)}
+      onClick={() => navigate(`/profile/${user.username}`)}
       className="group bg-white rounded-xl p-4 cursor-pointer hover:shadow-md transition-all duration-200 border border-gray-100"
     >
       <div className="flex flex-col items-center text-center">
