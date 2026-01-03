@@ -75,6 +75,8 @@ self.addEventListener("push", (event) => {
             title,
             body,
             taskId: data?.taskId,
+            followerUsername: data?.followerUsername,
+            notificationType: data?.type,
             url: data?.url,
           });
         });

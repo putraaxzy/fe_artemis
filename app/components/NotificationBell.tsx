@@ -13,6 +13,7 @@ import {
   MdAccessTime,
   MdChevronRight,
   MdSettings,
+  MdPersonAdd,
 } from "react-icons/md";
 import { usePushNotification } from "~/hooks/usePushNotification";
 import { useRealtimeNotifications } from "~/hooks/useRealtimeNotifications";
@@ -22,6 +23,8 @@ interface NotificationItem {
   title: string;
   body: string;
   taskId?: number;
+  followerUsername?: string;
+  type?: string;
   timestamp: Date;
   read: boolean;
 }
@@ -80,6 +83,8 @@ export function NotificationBell() {
       title = lastNotification.task?.judul || "Tugas Baru";
     } else if (lastNotification.type === "task_submitted") {
       title = "Tugas Dikumpulkan";
+    } else if (lastNotification.type === "user_followed") {
+      title = "Follower Baru!";
     }
     
     const newNotif: NotificationItem = {
@@ -87,6 +92,8 @@ export function NotificationBell() {
       title,
       body: lastNotification.message || "",
       taskId: lastNotification.task?.id,
+      followerUsername: lastNotification.follower?.username,
+      type: lastNotification.type,
       timestamp: new Date(),
       read: false,
     };
@@ -102,6 +109,8 @@ export function NotificationBell() {
         title: event.data.title || "Notifikasi",
         body: event.data.body || "",
         taskId: event.data.taskId,
+        followerUsername: event.data.followerUsername,
+        type: event.data.notificationType,
         timestamp: new Date(),
         read: false,
       };
@@ -139,7 +148,10 @@ export function NotificationBell() {
     markAsRead(notif.id);
     setIsOpen(false);
     
-    if (notif.taskId) {
+    // Navigate based on notification type
+    if (notif.type === "user_followed" && notif.followerUsername) {
+      navigate(`/profile/${notif.followerUsername}`);
+    } else if (notif.taskId) {
       navigate(`/dashboard/${notif.taskId}`);
     } else {
       navigate("/dashboard");
@@ -275,10 +287,20 @@ export function NotificationBell() {
                   >
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${
-                        !notif.read ? "bg-blue-500 text-white shadow-sm" : "bg-gray-100 text-gray-500"
+                        notif.type === "user_followed"
+                          ? !notif.read 
+                            ? "bg-pink-500 text-white shadow-sm" 
+                            : "bg-pink-100 text-pink-500"
+                          : !notif.read 
+                            ? "bg-blue-500 text-white shadow-sm" 
+                            : "bg-gray-100 text-gray-500"
                       }`}
                     >
-                      <MdTask className="w-5 h-5" />
+                      {notif.type === "user_followed" ? (
+                        <MdPersonAdd className="w-5 h-5" />
+                      ) : (
+                        <MdTask className="w-5 h-5" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p

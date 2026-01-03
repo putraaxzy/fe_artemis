@@ -15,6 +15,12 @@ export interface RealtimeNotification {
     tanggal_deadline?: string;
     target: string;
   };
+  follower?: {
+    id: number;
+    username: string;
+    name: string;
+    avatar: string;
+  };
   message: string;
   timestamp: string;
 }
@@ -87,6 +93,21 @@ export function useRealtimeNotifications() {
       }
     });
 
+    // Listen for user.followed event (when someone follows you)
+    channel.listen(".user.followed", (data: RealtimeNotification) => {
+      addNotification(data);
+
+      // Show browser notification if permitted
+      if (Notification.permission === "granted") {
+        new Notification("Follower Baru!", {
+          body: data.message,
+          icon: data.follower?.avatar || "/batik.png",
+          badge: "/batik.png",
+          tag: `user-followed-${data.follower?.id}`,
+        });
+      }
+    });
+
     setIsConnected(true);
 
     // Connection status listeners
@@ -106,6 +127,7 @@ export function useRealtimeNotifications() {
     return () => {
       channel.stopListening(".task.created");
       channel.stopListening(".task.submitted");
+      channel.stopListening(".user.followed");
       disconnectEcho();
       setIsConnected(false);
     };
