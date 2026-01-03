@@ -109,6 +109,9 @@ export interface AuthResponse {
 export interface RegisterOptions {
   kelas: string[];
   jurusan: string[];
+  jurusan_by_kelas?: {
+    [key: string]: string[];
+  };
 }
 
 // tipe form

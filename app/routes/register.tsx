@@ -4,12 +4,12 @@ import {
   authService,
   tokenService,
   userService,
+  type RegisterOptions,
 } from "../services/api";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { Alert } from "../components/Alert";
 import { useAuth } from "../hooks/useAuth";
-import { CLASSES, MAJORS } from "../constants";
 
 export function meta() {
   return [
@@ -31,6 +31,7 @@ export default function Register() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [options, setOptions] = useState<RegisterOptions | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,6 +39,21 @@ export default function Register() {
       navigate("/dashboard");
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  // Fetch registration options
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const response = await authService.getRegisterOptions();
+        if (response.berhasil) {
+          setOptions(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch registration options:", err);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -197,11 +213,11 @@ export default function Register() {
                   value={formData.kelas}
                   onChange={handleChange}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || !options}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>pilih</option>
-                  {CLASSES.map((k) => (
+                  {options?.kelas?.map((k) => (
                     <option key={k} value={k}>
                       {k}
                     </option>
@@ -218,11 +234,11 @@ export default function Register() {
                   value={formData.jurusan}
                   onChange={handleChange}
                   required
-                  disabled={isLoading || !formData.kelas}
+                  disabled={isLoading || !formData.kelas || !options}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>pilih</option>
-                  {formData.kelas && MAJORS[formData.kelas as keyof typeof MAJORS]?.map((j) => (
+                  {formData.kelas && options?.jurusan_by_kelas?.[formData.kelas]?.map((j) => (
                     <option key={j} value={j}>
                       {j}
                     </option>
