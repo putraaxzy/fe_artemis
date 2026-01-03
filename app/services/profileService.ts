@@ -7,6 +7,7 @@ import { API_BASE_URL } from "~/config/api";
 
 export interface UserProfile {
   id: number;
+  username: string;
   name: string;
   bio: string | null;
   avatar: string;
@@ -32,6 +33,7 @@ export interface PerformanceData {
 
 export interface UserPreview {
   id: number;
+  username: string;
   name: string;
   avatar: string;
   role: "guru" | "siswa";

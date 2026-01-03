@@ -43,6 +43,7 @@ function UserCard({ user }: { user: UserPreview }) {
           <p className="font-medium text-gray-900 truncate text-sm">
             {user.name}
           </p>
+          <p className="text-xs text-gray-600 truncate mb-0.5">@{user.username}</p>
           <p className="text-xs text-gray-500 truncate">
             {user.kelas && `${user.kelas}`}
             {user.jurusan && ` · ${user.jurusan}`}
@@ -77,9 +78,10 @@ function FeaturedUserCard({ user }: { user: UserPreview }) {
             </div>
           )}
         </div>
-        <p className="font-medium text-gray-900 truncate w-full text-sm mb-0.5">
+        <p className="font-medium text-gray-900 truncate w-full text-sm">
           {user.name}
         </p>
+        <p className="text-xs text-gray-600 truncate w-full mb-0.5">@{user.username}</p>
         <p className="text-xs text-gray-500 truncate w-full">
           {user.kelas && user.jurusan ? `${user.kelas} · ${user.jurusan}` : user.kelas || user.jurusan || user.role}
         </p>
@@ -176,7 +178,7 @@ export default function Explore() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama..."
+              placeholder="Cari nama atau username..."
               className="w-full bg-white border border-gray-200 rounded-lg pl-11 pr-11 py-3 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all"
             />
             {query && (

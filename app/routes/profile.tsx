@@ -115,6 +115,7 @@ function UserCard({ user, onClose }: { user: UserPreview; onClose?: () => void }
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+        <p className="text-xs text-gray-600 truncate">@{user.username}</p>
         <p className="text-xs text-gray-500 truncate">
           {user.kelas && user.jurusan ? `${user.kelas} · ${user.jurusan}` : user.role}
         </p>
@@ -178,7 +179,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama..."
+              placeholder="Cari nama atau username..."
               className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder-gray-400"
               autoFocus
             />
@@ -454,7 +455,8 @@ export default function Profile() {
               {/* Info */}
               <div className="flex-1 min-w-0 pt-1">
                 <h1 className="text-lg font-semibold text-gray-900 truncate">{profile.name}</h1>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-gray-600 mb-0.5">@{profile.username}</p>
+                <p className="text-xs text-gray-500">
                   <span className="capitalize">{profile.role}</span>
                   {profile.kelas && <span> · {profile.kelas}</span>}
                   {profile.jurusan && <span> · {profile.jurusan}</span>}
