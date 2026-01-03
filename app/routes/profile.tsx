@@ -16,6 +16,7 @@ import {
   MdStar,
   MdSchool,
   MdPersonRemove,
+  MdMoreVert,
 } from "react-icons/md";
 
 export function meta() {
@@ -25,78 +26,89 @@ export function meta() {
   ];
 }
 
-// Performance Chart Component
+// Performance Chart Component - Compact
 function PerformanceChart({ data }: { data: { task: string; score: number; date: string }[] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-        <MdTrendingUp className="w-10 h-10 text-gray-300 mb-3" />
-        <p className="text-sm text-gray-500">Belum ada data performa</p>
+      <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+        <MdTrendingUp className="w-8 h-8 text-gray-300 mb-2" />
+        <p className="text-xs text-gray-500">Belum ada data</p>
       </div>
     );
   }
 
   const maxScore = 100;
   const avgScore = data.reduce((a, b) => a + b.score, 0) / data.length;
+  const highestScore = Math.max(...data.map(d => d.score));
+  const lowestScore = Math.min(...data.map(d => d.score));
   
   return (
-    <div className="space-y-6">
-      {/* Average */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Rata-rata</p>
-          <p className="text-3xl font-semibold text-gray-900">{avgScore.toFixed(1)}</p>
+    <div className="space-y-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-gray-900 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-gray-400 uppercase mb-0.5">Rata-rata</p>
+          <p className="text-xl font-bold text-white">{avgScore.toFixed(0)}</p>
         </div>
-        <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-          avgScore >= 75 ? "bg-green-50 text-green-700" : 
-          avgScore >= 60 ? "bg-amber-50 text-amber-700" : 
-          "bg-red-50 text-red-700"
-        }`}>
-          {avgScore >= 75 ? "Baik" : avgScore >= 60 ? "Cukup" : "Perlu Perbaikan"}
+        <div className="bg-gray-50 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-gray-500 uppercase mb-0.5">Tertinggi</p>
+          <p className="text-xl font-bold text-green-600">{highestScore}</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-gray-500 uppercase mb-0.5">Terendah</p>
+          <p className="text-xl font-bold text-gray-600">{lowestScore}</p>
         </div>
       </div>
 
       {/* Bar Chart */}
-      <div>
-        <p className="text-xs text-gray-400 mb-3">10 Tugas Terakhir</p>
-        <div className="flex items-end gap-1 h-24">
-          {data.map((item, index) => {
-            const height = (item.score / maxScore) * 100;
-            const getBarColor = () => {
-              if (item.score >= 75) return "bg-green-500";
-              if (item.score >= 60) return "bg-amber-500";
-              return "bg-red-500";
-            };
-            
-            return (
-              <div 
-                key={index} 
-                className="flex-1 flex flex-col items-center group relative"
-              >
-                {/* Tooltip */}
-                <div className="absolute bottom-full mb-2 hidden group-hover:block z-20 pointer-events-none">
-                  <div className="bg-gray-800 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap">
-                    <p className="font-medium">{item.task}</p>
-                    <p className="text-gray-300 text-[10px]">{item.date}</p>
-                    <p className="font-bold mt-1">{item.score}</p>
-                  </div>
+      <div className="relative h-32 flex items-end gap-1.5 pt-4">
+        {data.map((item, index) => {
+          const height = (item.score / maxScore) * 100;
+          const getBarColor = () => {
+            if (item.score >= 75) return "bg-gray-900";
+            if (item.score >= 60) return "bg-gray-500";
+            return "bg-gray-300";
+          };
+          
+          return (
+            <div 
+              key={index} 
+              className="flex-1 flex flex-col items-center group relative"
+            >
+              <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                <div className="bg-gray-900 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap">
+                  <span className="font-medium">{item.score}</span>
                 </div>
-                
-                {/* Bar */}
-                <div 
-                  className={`w-full rounded-sm ${getBarColor()} transition-opacity hover:opacity-70 cursor-pointer`}
-                  style={{ height: `${Math.max(height, 4)}%` }}
-                />
               </div>
-            );
-          })}
+              <div 
+                className={`w-full rounded-t ${getBarColor()} transition-all hover:opacity-80 cursor-pointer`}
+                style={{ height: `${Math.max(height, 4)}%` }}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-sm bg-gray-900" />
+          <span className="text-[10px] text-gray-500">75+</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-sm bg-gray-500" />
+          <span className="text-[10px] text-gray-500">60-74</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-sm bg-gray-300" />
+          <span className="text-[10px] text-gray-500">&lt;60</span>
         </div>
       </div>
     </div>
   );
 }
 
-// User Card Component
+// User Card Component - Compact
 function UserCard({ user, onClose }: { user: UserPreview; onClose?: () => void }) {
   const navigate = useNavigate();
   
@@ -106,28 +118,32 @@ function UserCard({ user, onClose }: { user: UserPreview; onClose?: () => void }
         onClose?.();
         navigate(`/profile/${user.username}`);
       }}
-      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+      className="group flex items-center gap-2.5 p-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all"
     >
-      <img 
-        src={user.avatar} 
-        alt={user.name}
-        className="w-10 h-10 rounded-full object-cover"
-      />
+      <div className="relative">
+        <img 
+          src={user.avatar} 
+          alt={user.name}
+          className="w-10 h-10 rounded-full object-cover"
+        />
+        {user.role === "guru" && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gray-900 rounded-full flex items-center justify-center ring-2 ring-white">
+            <MdSchool className="w-2.5 h-2.5 text-white" />
+          </div>
+        )}
+      </div>
+      
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-        <p className="text-xs text-gray-600 truncate">@{user.username}</p>
-        <p className="text-xs text-gray-500 truncate">
-          {user.kelas && user.jurusan ? `${user.kelas} · ${user.jurusan}` : user.role}
-        </p>
+        <p className="text-xs text-gray-500 truncate">@{user.username}</p>
       </div>
-      {user.role === "guru" && (
-        <MdSchool className="w-4 h-4 text-amber-500 flex-shrink-0" />
-      )}
+      
+      <MdArrowBack className="w-4 h-4 text-gray-300 transform rotate-180" />
     </div>
   );
 }
 
-// Search Modal
+// Search Modal - Compact
 function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserPreview[]>([]);
@@ -167,24 +183,24 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 animate-in fade-in duration-200">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden">
+      <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-4 duration-300">
         {/* Search Input */}
-        <div className="p-4 border-b border-gray-100">
-          <div className="flex items-center gap-3 bg-gray-100 rounded-lg px-3 py-2.5">
-            <MdSearch className="w-5 h-5 text-gray-400" />
+        <div className="p-3 border-b border-gray-100">
+          <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-200 focus-within:border-gray-400 transition-colors">
+            <MdSearch className="w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama atau username..."
+              placeholder="Cari pengguna..."
               className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder-gray-400"
               autoFocus
             />
             {query && (
-              <button onClick={() => setQuery("")}>
+              <button onClick={() => setQuery("")} className="p-0.5">
                 <MdClose className="w-4 h-4 text-gray-400" />
               </button>
             )}
@@ -194,22 +210,24 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
         {/* Results */}
         <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
-            <div className="py-12 text-center">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto" />
+            <div className="py-8 text-center">
+              <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto" />
             </div>
           ) : results.length > 0 ? (
-            <div className="p-2">
+            <div className="p-1.5">
               {results.map((user) => (
                 <UserCard key={user.id} user={user} onClose={onClose} />
               ))}
             </div>
           ) : query ? (
-            <div className="py-12 text-center text-gray-500 text-sm">
-              Tidak ditemukan
+            <div className="py-8 text-center">
+              <MdSearch className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">Tidak ditemukan</p>
             </div>
           ) : (
-            <div className="py-12 text-center text-gray-400 text-sm">
-              Ketik nama untuk mencari
+            <div className="py-8 text-center">
+              <MdPeople className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">Ketik untuk mencari</p>
             </div>
           )}
         </div>
@@ -218,7 +236,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
   );
 }
 
-// Connections Modal
+// Connections Modal - Compact
 function ConnectionsModal({ 
   isOpen, 
   onClose, 
@@ -259,16 +277,16 @@ function ConnectionsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-sm bg-white rounded-xl shadow-xl overflow-hidden">
+      <div className="relative w-full max-w-sm bg-white rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h3 className="text-base font-semibold text-gray-900">
             {type === "followers" ? "Followers" : "Following"}
           </h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg">
             <MdClose className="w-5 h-5 text-gray-500" />
           </button>
         </div>
@@ -276,19 +294,21 @@ function ConnectionsModal({
         {/* Content */}
         <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
-            <div className="py-12 text-center">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto" />
+            <div className="py-8 text-center">
+              <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto" />
             </div>
           ) : users.length > 0 ? (
-            <div className="p-2">
+            <div className="p-1.5">
               {users.map((user) => (
                 <UserCard key={user.id} user={user} onClose={onClose} />
               ))}
             </div>
           ) : (
-            <div className="py-12 text-center text-gray-500 text-sm">
-              <MdPeople className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              {type === "followers" ? "Belum ada followers" : "Belum mengikuti siapapun"}
+            <div className="py-8 text-center">
+              <MdPeople className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">
+                {type === "followers" ? "Belum ada followers" : "Belum mengikuti siapapun"}
+              </p>
             </div>
           )}
         </div>
@@ -297,7 +317,7 @@ function ConnectionsModal({
   );
 }
 
-// Main Profile Component
+// Main Profile Component with refined design
 export default function Profile() {
   const { username } = useParams();
   const navigate = useNavigate();
@@ -391,8 +411,11 @@ export default function Profile() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center">
+            <div className="w-10 h-10 border-3 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-gray-500 mt-4">Memuat profil...</p>
+          </div>
         </div>
       </div>
     );
@@ -415,10 +438,10 @@ export default function Profile() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      {/* Search FAB */}
+      {/* Search FAB with refined design */}
       <button
         onClick={() => setShowSearch(true)}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-gray-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-800 transition-colors"
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-gray-900 text-white rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center hover:scale-105 transition-all duration-200"
       >
         <MdSearch className="w-5 h-5" />
       </button>
@@ -427,55 +450,61 @@ export default function Profile() {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-900 mb-6 text-sm"
+          className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-900 mb-5 text-sm font-medium transition-colors group"
         >
-          <MdArrowBack className="w-4 h-4" />
+          <MdArrowBack className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           Kembali
         </button>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-          {/* Header with avatar */}
-          <div className="p-6 pb-4">
+        {/* Profile Header Card */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4 shadow-sm">
+          <div className="p-5">
             <div className="flex items-start gap-4">
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 <img
                   src={profile.avatar}
                   alt={profile.name}
-                  className="w-20 h-20 rounded-full object-cover"
+                  className="w-20 h-20 rounded-xl object-cover ring-2 ring-gray-100"
                 />
                 {profile.role === "guru" && (
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center">
-                    <MdSchool className="w-3.5 h-3.5 text-white" />
+                  <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gray-900 rounded-lg flex items-center justify-center shadow">
+                    <MdSchool className="w-4 h-4 text-white" />
                   </div>
                 )}
               </div>
 
               {/* Info */}
-              <div className="flex-1 min-w-0 pt-1">
-                <h1 className="text-lg font-semibold text-gray-900 truncate">{profile.name}</h1>
-                <p className="text-sm text-gray-600 mb-0.5">@{profile.username}</p>
-                <p className="text-xs text-gray-500">
-                  <span className="capitalize">{profile.role}</span>
-                  {profile.kelas && <span> · {profile.kelas}</span>}
-                  {profile.jurusan && <span> · {profile.jurusan}</span>}
-                </p>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 truncate">{profile.name}</h1>
+                <p className="text-sm text-gray-500 mb-2">@{profile.username}</p>
                 
-                {/* Stats inline */}
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-md text-xs text-gray-600">
+                  <span className="capitalize">{profile.role}</span>
+                  {profile.kelas && <span className="text-gray-300">·</span>}
+                  {profile.kelas && <span>{profile.kelas}</span>}
+                  {profile.jurusan && <span className="text-gray-300">·</span>}
+                  {profile.jurusan && <span>{profile.jurusan}</span>}
+                </div>
+                
+                {/* Stats */}
                 <div className="flex items-center gap-4 mt-3">
                   <button 
                     onClick={() => setShowConnections("followers")}
-                    className="text-center"
+                    className="group"
                   >
-                    <span className="font-semibold text-gray-900">{profile.followers_count}</span>
+                    <span className="text-base font-bold text-gray-900 group-hover:text-gray-700">
+                      {profile.followers_count}
+                    </span>
                     <span className="text-xs text-gray-500 ml-1">followers</span>
                   </button>
                   <button 
                     onClick={() => setShowConnections("following")}
-                    className="text-center"
+                    className="group"
                   >
-                    <span className="font-semibold text-gray-900">{profile.following_count}</span>
+                    <span className="text-base font-bold text-gray-900 group-hover:text-gray-700">
+                      {profile.following_count}
+                    </span>
                     <span className="text-xs text-gray-500 ml-1">following</span>
                   </button>
                 </div>
@@ -483,7 +512,7 @@ export default function Profile() {
             </div>
 
             {/* Bio */}
-            <div className="mt-4">
+            <div className="mt-4 pt-4 border-t border-gray-100">
               {isOwnProfile ? (
                 showBioEdit ? (
                   <div className="space-y-2">
@@ -491,8 +520,8 @@ export default function Profile() {
                       value={bioText}
                       onChange={(e) => setBioText(e.target.value)}
                       maxLength={200}
-                      placeholder="Tulis tentang dirimu..."
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                      placeholder="Ceritakan tentang dirimu..."
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
                       rows={3}
                       autoFocus
                     />
@@ -523,97 +552,110 @@ export default function Profile() {
                 ) : (
                   <button
                     onClick={() => setShowBioEdit(true)}
-                    className="w-full text-left text-sm"
+                    className="w-full text-left group"
                   >
                     {profile.bio ? (
-                      <p className="text-gray-700">{profile.bio}</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{profile.bio}</p>
                     ) : (
-                      <p className="text-gray-400 flex items-center gap-1.5">
-                        <MdEdit className="w-3.5 h-3.5" />
-                        Tambahkan bio...
-                      </p>
+                      <div className="flex items-center gap-2 text-gray-400 group-hover:text-gray-600 transition-colors">
+                        <MdEdit className="w-4 h-4" />
+                        <span className="text-sm">Tambahkan bio...</span>
+                      </div>
                     )}
                   </button>
                 )
               ) : profile.bio ? (
-                <p className="text-sm text-gray-700">{profile.bio}</p>
+                <p className="text-sm text-gray-700 leading-relaxed">{profile.bio}</p>
               ) : null}
             </div>
 
             {/* Follow Button */}
             {!isOwnProfile && (
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className={`w-full mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isFollowing
-                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    : "bg-gray-900 text-white hover:bg-gray-800"
-                }`}
-              >
-                {followLoading ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : isFollowing ? (
-                  <>
-                    <MdPersonRemove className="w-4 h-4" />
-                    Unfollow
-                  </>
-                ) : (
-                  <>
-                    <MdPersonAdd className="w-4 h-4" />
-                    Follow
-                  </>
-                )}
-              </button>
+              <div className="mt-4">
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    isFollowing
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-900 text-white hover:bg-gray-800"
+                  }`}
+                >
+                  {followLoading ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : isFollowing ? (
+                    <>
+                      <MdPersonRemove className="w-4 h-4" />
+                      Berhenti Mengikuti
+                    </>
+                  ) : (
+                    <>
+                      <MdPersonAdd className="w-4 h-4" />
+                      Ikuti
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>
 
         {/* Stats Cards - Siswa Only */}
         {profile.role === "siswa" && profile.stats && (
-          <>
-            {/* Compact Stats Row */}
-            <div className="flex gap-2 mb-4">
-              <div className="flex-1 bg-white rounded-lg border border-gray-200 p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
-                  <MdAssignment className="w-4 h-4" />
-                  <span className="text-xs">Tugas</span>
+          <div className="space-y-4">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center mx-auto mb-2">
+                  <MdAssignment className="w-5 h-5 text-gray-600" />
                 </div>
-                <p className="text-xl font-semibold text-gray-900">{profile.stats.total_tasks}</p>
+                <p className="text-xl font-bold text-gray-900">{profile.stats.total_tasks}</p>
+                <p className="text-xs text-gray-500">Total</p>
               </div>
-              <div className="flex-1 bg-white rounded-lg border border-gray-200 p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
-                  <MdCheckCircle className="w-4 h-4" />
-                  <span className="text-xs">Selesai</span>
+
+              <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center mx-auto mb-2">
+                  <MdCheckCircle className="w-5 h-5 text-green-600" />
                 </div>
-                <p className="text-xl font-semibold text-gray-900">{profile.stats.completed_tasks}</p>
+                <p className="text-xl font-bold text-gray-900">{profile.stats.completed_tasks}</p>
+                <p className="text-xs text-gray-500">Selesai</p>
               </div>
-              <div className="flex-1 bg-white rounded-lg border border-gray-200 p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
-                  <MdStar className="w-4 h-4" />
-                  <span className="text-xs">Nilai</span>
+
+              <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
+                <div className="w-9 h-9 rounded-lg bg-yellow-50 flex items-center justify-center mx-auto mb-2">
+                  <MdStar className="w-5 h-5 text-yellow-600" />
                 </div>
-                <p className="text-xl font-semibold text-gray-900">{profile.stats.average_score.toFixed(0)}</p>
+                <p className="text-xl font-bold text-gray-900">{profile.stats.average_score}</p>
+                <p className="text-xs text-gray-500">Rata-rata</p>
               </div>
             </div>
 
             {/* Performance Chart */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h2 className="text-sm font-medium text-gray-900 mb-4">Performa</h2>
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">Performa</h2>
+                  <p className="text-xs text-gray-500">10 tugas terakhir</p>
+                </div>
+                <MdTrendingUp className="w-5 h-5 text-gray-400" />
+              </div>
               <PerformanceChart data={profile.stats.performance_data} />
             </div>
-          </>
+          </div>
         )}
       </main>
 
       {/* Modals */}
       <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} />
-      <ConnectionsModal 
-        isOpen={showConnections !== null} 
-        onClose={() => setShowConnections(null)}
-        userId={profile.id}
-        type={showConnections || "followers"}
-      />
+      
+      {showConnections && profile && (
+        <ConnectionsModal 
+          isOpen={!!showConnections} 
+          onClose={() => setShowConnections(null)} 
+          userId={profile.id}
+          type={showConnections}
+        />
+      )}
     </div>
   );
 }

@@ -8,87 +8,142 @@ import {
   MdClose,
   MdArrowForward,
   MdSchool,
+  MdPersonOutline,
+  MdTrendingUp
 } from "react-icons/md";
 
-export function meta() {
-  return [
-    { title: "Explore - Tugas" },
-    { name: "description", content: "Cari dan temukan teman" },
-  ];
+// TypeWriter Effect Component
+function TypeWriter({ text, className }: { text: string; className?: string }) {
+  const [displayText, setDisplayText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, text]);
+
+  return (
+    <span className={className}>
+      {displayText}
+      {currentIndex < text.length && (
+        <span className="animate-pulse">|</span>
+      )}
+    </span>
+  );
 }
 
-// User Card Component
+// Badge untuk peran Guru
+function TeacherBadge() {
+  return (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-zinc-800 text-white text-[9px] font-medium">
+      <MdSchool className="w-2.5 h-2.5" />
+      <span>Guru</span>
+    </span>
+  );
+}
+
+// User Card - Compact
 function UserCard({ user }: { user: UserPreview }) {
   const navigate = useNavigate();
-  
+  const isGuru = user.role === "guru";
+
   return (
     <div 
       onClick={() => navigate(`/profile/${user.username}`)}
-      className="group bg-white rounded-xl p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 border border-gray-100"
+      className="group flex items-center gap-4 p-4 bg-white border border-zinc-200 rounded-2xl cursor-pointer hover:border-zinc-400 active:scale-[0.99] transition-all"
     >
-      <div className="flex items-center gap-3">
-        <div className="relative flex-shrink-0">
-          <img 
-            src={user.avatar} 
-            alt={user.name}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-          {user.role === "guru" && (
-            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-amber-400 rounded-full border-2 border-white flex items-center justify-center">
-              <MdSchool className="w-3 h-3 text-white" />
-            </div>
-          )}
+      <img 
+        src={user.avatar} 
+        alt={user.name}
+        className="w-14 h-14 rounded-full object-cover bg-zinc-100 flex-shrink-0 ring-2 ring-zinc-100"
+      />
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold text-zinc-900 truncate">{user.name}</h3>
+          {isGuru && <TeacherBadge />}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 truncate text-sm">
-            {user.name}
+        <p className="text-sm text-zinc-500 truncate">@{user.username}</p>
+        {(user.kelas || user.jurusan) && (
+          <p className="text-sm text-zinc-400 truncate mt-1">
+            {[user.kelas, user.jurusan].filter(Boolean).join(" - ")}
           </p>
-          <p className="text-xs text-gray-600 truncate mb-0.5">@{user.username}</p>
-          <p className="text-xs text-gray-500 truncate">
-            {user.kelas && `${user.kelas}`}
-            {user.jurusan && ` · ${user.jurusan}`}
-            {!user.kelas && !user.jurusan && user.role}
-          </p>
-        </div>
-        <MdArrowForward className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-zinc-400 hidden sm:block">Lihat Profil</span>
+        <MdArrowForward className="w-5 h-5 text-zinc-400 group-hover:text-zinc-600 flex-shrink-0" />
       </div>
     </div>
   );
 }
 
-// Featured User Card
+// Featured Card - Larger with decoration
 function FeaturedUserCard({ user }: { user: UserPreview }) {
   const navigate = useNavigate();
+  const isGuru = user.role === "guru";
   
   return (
     <div 
       onClick={() => navigate(`/profile/${user.username}`)}
-      className="group bg-white rounded-xl p-4 cursor-pointer hover:shadow-md transition-all duration-200 border border-gray-100"
+      className="group relative overflow-hidden flex items-center gap-4 p-5 bg-zinc-50 border border-zinc-200 rounded-2xl cursor-pointer hover:bg-white hover:border-zinc-300 active:scale-[0.99] transition-all"
     >
-      <div className="flex flex-col items-center text-center">
-        <div className="relative mb-3">
-          <img 
-            src={user.avatar} 
-            alt={user.name}
-            className="w-16 h-16 rounded-full object-cover"
-          />
-          {user.role === "guru" && (
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-400 rounded-full border-2 border-white flex items-center justify-center">
-              <MdSchool className="w-3.5 h-3.5 text-white" />
-            </div>
-          )}
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-zinc-200/30 rounded-full -mr-10 -mt-10" />
+      <div className="absolute bottom-0 left-0 w-16 h-16 bg-zinc-200/20 rounded-full -ml-6 -mb-6" />
+      
+      <div className="relative">
+        <img 
+          src={user.avatar} 
+          alt={user.name}
+          className="w-16 h-16 rounded-full object-cover bg-zinc-200 flex-shrink-0 ring-4 ring-white"
+        />
+        {isGuru && (
+          <div className="absolute -bottom-1 -right-1 bg-zinc-800 p-1 rounded-full">
+            <MdSchool className="w-3 h-3 text-white" />
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0 relative">
+        <h3 className="font-bold text-zinc-900 truncate text-lg">{user.name}</h3>
+        <p className="text-sm text-zinc-500 truncate">@{user.username}</p>
+        {(user.kelas || user.jurusan) && (
+          <div className="mt-2 inline-flex items-center px-2 py-1 bg-zinc-200/50 rounded-md">
+            <p className="text-xs font-medium text-zinc-600">
+              {[user.kelas, user.jurusan].filter(Boolean).join(" - ")}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <MdArrowForward className="w-5 h-5 text-zinc-400 group-hover:text-zinc-600 flex-shrink-0 relative" />
+    </div>
+  );
+}
+
+// Skeleton Loading
+function CardSkeleton() {
+  return (
+    <div className="bg-white border border-zinc-200 rounded-2xl p-4 animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 bg-zinc-200 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-zinc-200 rounded w-1/3" />
+          <div className="h-3 bg-zinc-100 rounded w-1/2" />
         </div>
-        <p className="font-medium text-gray-900 truncate w-full text-sm">
-          {user.name}
-        </p>
-        <p className="text-xs text-gray-600 truncate w-full mb-0.5">@{user.username}</p>
-        <p className="text-xs text-gray-500 truncate w-full">
-          {user.kelas && user.jurusan ? `${user.kelas} · ${user.jurusan}` : user.kelas || user.jurusan || user.role}
-        </p>
       </div>
     </div>
   );
 }
+
+// -- MAIN PAGE --
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -100,28 +155,26 @@ export default function Explore() {
   const [featured, setFeatured] = useState<UserPreview[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Authentication Check
   useEffect(() => {
     if (authLoading) return;
-    
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
-
     const loadFeatured = async () => {
       try {
         const response = await profileService.searchUsers("a");
         if (response.berhasil) {
-          setFeatured(response.data.slice(0, 6));
+          // Mengambil 4 saja agar grid terlihat lebih clean (2x2)
+          setFeatured(response.data.slice(0, 4));
         }
-      } catch {
-        // Silent
-      }
+      } catch { /* Silent */ }
     };
-
     loadFeatured();
   }, [authLoading, isAuthenticated, navigate]);
 
+  // Search Logic
   const handleSearch = useCallback(async () => {
     if (!query.trim()) {
       setResults([]);
@@ -133,131 +186,107 @@ export default function Explore() {
     setHasSearched(true);
     try {
       const response = await profileService.searchUsers(query);
-      if (response.berhasil) {
-        setResults(response.data);
-      }
-    } catch (error) {
-      // Silent error
-    } finally {
-      setIsLoading(false);
-    }
+      if (response.berhasil) setResults(response.data);
+    } catch { /* Silent */ } 
+    finally { setIsLoading(false); }
   }, [query]);
 
+  // Debounce
   useEffect(() => {
     const debounce = setTimeout(handleSearch, 300);
     return () => clearTimeout(debounce);
   }, [query, handleSearch]);
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-white" />; 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
       <Header />
       
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
-        {/* Header */}
+      <main className="max-w-lg mx-auto px-4 pt-6 pb-20">
+        {/* Header with Typing Effect */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-1">Explore</h1>
-          <p className="text-sm text-gray-600">Temukan dan terhubung dengan teman</p>
+          <h1 className="text-3xl font-black text-zinc-900">
+            <TypeWriter text="Explore" />
+          </h1>
+          <p className="text-base font-semibold text-zinc-500 mt-2">
+            <TypeWriter text="Temukan guru dan teman kelas" />
+          </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <MdSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama atau username..."
-              className="w-full bg-white border border-gray-200 rounded-lg pl-11 pr-11 py-3 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all"
-            />
-            {query && (
-              <button 
-                onClick={() => setQuery("")} 
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <MdClose className="w-4 h-4 text-gray-400" />
-              </button>
-            )}
+        {/* Search Input */}
+        <div className="relative mb-6">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <MdSearch className="w-5 h-5 text-zinc-400" />
           </div>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Cari username, nama..."
+            className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-400 rounded-lg py-2.5 pl-10 pr-10 focus:outline-none focus:bg-white focus:border-zinc-400 transition-all"
+          />
+          {query && (
+            <button 
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-zinc-400 hover:text-zinc-600"
+            >
+              <MdClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Search Results */}
         {hasSearched && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-medium text-gray-600">
-                {isLoading ? "Mencari..." : `${results.length} hasil`}
-              </h2>
-            </div>
+          <div className="space-y-3">
+            <p className="text-xs text-zinc-500">
+              {isLoading ? "Mencari..." : `${results.length} hasil ditemukan`}
+            </p>
 
             {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl p-4 animate-pulse border border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gray-200" />
-                      <div className="flex-1">
-                        <div className="h-3.5 bg-gray-200 rounded w-32 mb-2" />
-                        <div className="h-3 bg-gray-200 rounded w-24" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {[1,2,3].map((i) => <CardSkeleton key={i} />)}
               </div>
             ) : results.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {results.map((user) => (
                   <UserCard key={user.id} user={user} />
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-xl p-12 text-center border border-gray-100">
-                <div className="w-12 h-12 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center">
-                  <MdSearch className="w-5 h-5 text-gray-400" />
-                </div>
-                <p className="text-sm text-gray-600 mb-1">Tidak ada hasil</p>
-                <p className="text-xs text-gray-500">Coba kata kunci lain</p>
+              <div className="py-10 text-center border border-dashed border-zinc-200 rounded-xl">
+                <MdPersonOutline className="w-10 h-10 text-zinc-300 mx-auto mb-2" />
+                <p className="text-sm text-zinc-500">Tidak ditemukan</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Featured Users Section */}
+        {/* Featured */}
         {!hasSearched && featured.length > 0 && (
           <div>
-            <h2 className="text-sm font-medium text-gray-600 mb-4">
-              Rekomendasi untuk Anda
-            </h2>
+            <div className="flex items-center gap-2 mb-4">
+              <MdTrendingUp className="w-4 h-4 text-zinc-500" />
+              <h2 className="text-sm font-semibold text-zinc-700">Disarankan</h2>
+            </div>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
               {featured.map((user) => (
                 <FeaturedUserCard key={user.id} user={user} />
               ))}
             </div>
           </div>
         )}
-
-        {/* Empty State */}
-        {!hasSearched && featured.length === 0 && !authLoading && (
-          <div className="bg-white rounded-xl p-12 text-center border border-gray-100">
-            <div className="w-12 h-12 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center">
-              <MdSearch className="w-5 h-5 text-gray-400" />
-            </div>
-            <p className="text-sm text-gray-600">Mulai cari untuk menemukan teman</p>
-          </div>
-        )}
       </main>
     </div>
   );
+}
+
+export function meta() {
+  return [
+    { title: "Explore | Find Your Connections" },
+    { name: "description", content: "Cari guru, teman, dan koneksi akademik." },
+  ];
 }
