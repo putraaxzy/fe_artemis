@@ -415,7 +415,7 @@ export default function Profile() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pt-14">
         <Header />
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center">
@@ -429,7 +429,7 @@ export default function Profile() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pt-14">
         <Header />
         <div className="max-w-md mx-auto px-4 py-8">
           <Alert type="error" message={error} />
@@ -441,7 +441,7 @@ export default function Profile() {
   if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-14">
       <Header />
       
       {/* Search FAB with refined design */}

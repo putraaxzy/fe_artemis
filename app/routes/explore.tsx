@@ -210,10 +210,10 @@ export default function Explore() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
+    <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white pt-14">
       <Header />
       
-      <main className="max-w-lg mx-auto px-4 pt-18 pb-20">
+      <main className="max-w-lg mx-auto px-4 pb-20">
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}

@@ -627,7 +627,19 @@ export default function TaskDetailPage() {
                       </div>
                     )}
                     <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
-                      {isPemberitahuan ? <><MdCheck className="w-4 h-4" /> Tandai Sudah Dibaca</> : <><MdSend className="w-4 h-4" /> Kumpulkan Tugas</>}
+                      {isPemberitahuan ? (
+                        <span className="inline-flex items-center gap-2">
+                          <MdCheck className="w-4 h-4" />
+                          <span className="hidden sm:inline">Tandai Sudah Dibaca</span>
+                          <span className="sm:hidden">Sudah Dibaca</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-2">
+                          <MdSend className="w-4 h-4" />
+                          <span className="hidden sm:inline">Kumpulkan Tugas</span>
+                          <span className="sm:hidden">Kumpulkan</span>
+                        </span>
+                      )}
                     </Button>
                   </form>
                 </div>
