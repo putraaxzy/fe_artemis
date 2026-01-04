@@ -3,9 +3,10 @@
  * Handle incoming push notifications dan background sync
  */
 
-// Precache manifest injection point (required by vite-plugin-pwa)
-// eslint-disable-next-line no-undef
-self.__WB_MANIFEST;
+import { precacheAndRoute } from 'workbox-precaching';
+
+// Precache and route all assets
+precacheAndRoute(self.__WB_MANIFEST || []);
 
 // Cache version
 const CACHE_VERSION = "v1";

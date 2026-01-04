@@ -15,6 +15,10 @@ export default defineConfig({
       filename: "service-worker.js",
       registerType: "autoUpdate",
       includeAssets: ["batik.png"],
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        injectionPoint: undefined,
+      },
       manifest: {
         name: "artemis - manajemen tugas",
         short_name: "artemis",
@@ -59,9 +63,6 @@ export default defineConfig({
             purpose: "any maskable",
           },
         ],
-      },
-      injectManifest: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
       },
       devOptions: {
         enabled: false,
