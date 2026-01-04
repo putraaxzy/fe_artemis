@@ -25,6 +25,7 @@ import {
   MdTrendingUp,
   MdCelebration,
   MdAutoAwesome,
+  MdFileDownload,
 } from "react-icons/md";
 
 export function meta() {
@@ -173,6 +174,7 @@ function TaskCard({
   onClick, 
   onEdit, 
   onDelete,
+  onExport,
   isArchived = false
 }: { 
   task: Task; 
@@ -180,6 +182,7 @@ function TaskCard({
   onClick: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onExport?: () => void;
   isArchived?: boolean;
 }) {
   const progress = isGuru && task.total_siswa 
@@ -272,8 +275,17 @@ function TaskCard({
       </div>
 
       {/* Guru Actions - Show on hover */}
-      {isGuru && (onEdit || onDelete) && (
+      {isGuru && (onEdit || onDelete || onExport) && (
         <div className="absolute right-2 top-2 hidden group-hover:flex gap-1 bg-white rounded-lg shadow-sm border border-zinc-200 p-0.5">
+          {onExport && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onExport(); }}
+              className="p-1.5 hover:bg-emerald-50 rounded-md transition-colors"
+              title="Export Excel"
+            >
+              <MdFileDownload className="w-4 h-4 text-emerald-600" />
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(); }}
@@ -305,6 +317,7 @@ function TaskSection({
   onTaskClick,
   onEdit,
   onDelete,
+  onExport,
   collapsible = false,
   defaultCollapsed = false,
   emptyMessage,
@@ -317,6 +330,7 @@ function TaskSection({
   onTaskClick: (id: number) => void;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
+  onExport?: (id: number) => void;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
   emptyMessage?: string;
@@ -353,6 +367,7 @@ function TaskSection({
                 onClick={() => onTaskClick(task.id)}
                 onEdit={onEdit ? () => onEdit(task.id) : undefined}
                 onDelete={onDelete ? () => onDelete(task.id) : undefined}
+                onExport={onExport ? () => onExport(task.id) : undefined}
                 isArchived={isArchived}
               />
             ))}
@@ -493,6 +508,22 @@ export default function Dashboard() {
     }
   };
 
+  const handleExport = async (taskId: number) => {
+    try {
+      const blob = await taskService.exportTask(taskId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tugas-${taskId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal export tugas");
+    }
+  };
+
   // Smart task grouping
   const groupedTasks = useMemo(() => {
     const now = new Date();
@@ -607,7 +638,7 @@ export default function Dashboard() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-zinc-50">
+      <main className="min-h-screen bg-zinc-50 pt-14">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
           {/* Header */}
           <div className="space-y-1">
@@ -775,6 +806,7 @@ export default function Dashboard() {
                   onTaskClick={(id) => navigate(`/dashboard/${id}`)}
                   onEdit={(id) => navigate(`/edit-task/${id}`)}
                   onDelete={(id) => setDeleteId(id)}
+                  onExport={handleExport}
                 />
               )}
 
@@ -787,6 +819,7 @@ export default function Dashboard() {
                   onTaskClick={(id) => navigate(`/dashboard/${id}`)}
                   onEdit={(id) => navigate(`/edit-task/${id}`)}
                   onDelete={(id) => setDeleteId(id)}
+                  onExport={handleExport}
                 />
               )}
 
@@ -799,6 +832,7 @@ export default function Dashboard() {
                   onTaskClick={(id) => navigate(`/dashboard/${id}`)}
                   onEdit={(id) => navigate(`/edit-task/${id}`)}
                   onDelete={(id) => setDeleteId(id)}
+                  onExport={handleExport}
                   collapsible
                   defaultCollapsed
                   isArchived

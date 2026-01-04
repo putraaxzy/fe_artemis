@@ -40,9 +40,9 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200/50 fixed top-0 left-0 right-0 z-50">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 max-w-7xl mx-auto">
+          <div className="flex justify-between items-center h-14 max-w-7xl mx-auto">
             {/* Logo */}
             <Link
               to="/"
@@ -62,7 +62,7 @@ export function Header() {
                 <nav className="hidden md:flex items-center gap-1">
                   <Link
                     to="/dashboard"
-                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                    className="px-3 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
                   >
                     <MdTask className="w-4 h-4" />
                     <span>Tasks</span>
@@ -70,7 +70,7 @@ export function Header() {
                   {user?.role === "guru" && (
                     <Link
                       to="/create-task"
-                      className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                      className="px-3 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
                     >
                       <MdAdd className="w-4 h-4" />
                       <span>Create Task</span>
@@ -78,21 +78,21 @@ export function Header() {
                   )}
                   <Link
                     to="/explore"
-                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                    className="px-3 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
                   >
                     <MdExplore className="w-4 h-4" />
                     <span>Explore</span>
                   </Link>
                   <Link
                     to={`/profile/${user?.username}`}
-                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                    className="px-3 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
                   >
                     <MdPerson className="w-4 h-4" />
                     <span>Profile</span>
                   </Link>
                   <Link
                     to="/settings"
-                    className="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
+                    className="px-3 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-all font-medium flex items-center gap-2 text-sm"
                   >
                     <MdSettings className="w-4 h-4" />
                     <span>Settings</span>
@@ -102,7 +102,7 @@ export function Header() {
 
               {/* Divider - Desktop Only */}
               {isAuthenticated && (
-                <div className="hidden md:block w-px h-8 bg-gray-200" />
+                <div className="hidden md:block w-px h-6 bg-zinc-200" />
               )}
 
               {/* Notification Bell - Desktop */}
@@ -116,14 +116,14 @@ export function Header() {
               {isAuthenticated && user ? (
                 <>
                   <div className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      <FaUser className="w-3.5 h-3.5 text-gray-600" />
+                    <div className="w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center">
+                      <FaUser className="w-3 h-3 text-zinc-600" />
                     </div>
                     <div className="hidden lg:block">
-                      <p className="font-medium text-gray-900 text-sm leading-tight">
+                      <p className="font-medium text-zinc-900 text-sm leading-tight">
                         {user.name}
                       </p>
-                      <p className="text-xs text-gray-500 capitalize leading-tight">
+                      <p className="text-xs text-zinc-500 capitalize leading-tight">
                         {user.role}
                       </p>
                     </div>
@@ -146,16 +146,16 @@ export function Header() {
                   {/* Mobile Menu Button */}
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="md:hidden p-2 rounded-lg hover:bg-zinc-100 transition-colors"
                   >
-                    <MdMenu className="w-6 h-6 text-gray-900" />
+                    <MdMenu className="w-5 h-5 text-zinc-900" />
                   </button>
                 </>
               ) : (
                 <Button
                   size="sm"
                   onClick={() => navigate("/login")}
-                  className="text-sm bg-gray-900 hover:bg-gray-800"
+                  className="text-sm bg-zinc-900 hover:bg-zinc-800"
                 >
                   Login
                 </Button>
@@ -170,89 +170,89 @@ export function Header() {
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] md:hidden"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60] md:hidden"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Slide Panel - FROM LEFT */}
-          <div className="fixed top-0 left-0 h-full w-72 max-w-[85vw] bg-white shadow-2xl z-[70] md:hidden animate-slide-in-left">
-            <div className="p-6 space-y-6">
+          <div className="fixed top-0 left-0 h-full w-72 max-w-[85vw] bg-white/95 backdrop-blur-xl shadow-2xl z-[70] md:hidden animate-slide-in-left">
+            <div className="p-5 space-y-5">
               {/* Close Button */}
               {/* Close Button */}
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="absolute top-3 right-3 p-2 rounded-lg hover:bg-zinc-100 transition-colors"
               >
-                <MdClose className="w-6 h-6 text-gray-900" />
+                <MdClose className="w-5 h-5 text-zinc-900" />
               </button>
 
               {/* User Info */}
-              <div className="pb-4 border-b border-gray-200 pt-2 flex items-center gap-3">
-                <FaUser className="w-5 h-5 text-gray-600" />
+              <div className="pb-4 border-b border-zinc-200 pt-2 flex items-center gap-3">
+                <FaUser className="w-4 h-4 text-zinc-600" />
                 <div>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-base font-bold text-zinc-900">
                     {user?.name}
                   </p>
-                  <p className="text-sm text-gray-600 capitalize">
+                  <p className="text-xs text-zinc-500 capitalize">
                     {user?.role}
                   </p>
                 </div>
               </div>
 
               {/* Menu Items */}
-              <nav className="space-y-2">
+              <nav className="space-y-1">
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
                 >
                   <MdTask className="w-5 h-5" />
-                  <span className="font-medium">Tasks</span>
+                  <span className="font-medium text-sm">Tasks</span>
                 </Link>
                 {user?.role === "guru" && (
                   <Link
                     to="/create-task"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
                   >
                     <MdAdd className="w-5 h-5" />
-                    <span className="font-medium">Create Task</span>
+                    <span className="font-medium text-sm">Create Task</span>
                   </Link>
                 )}
 
                 <Link
                   to="/explore"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
                 >
                   <MdExplore className="w-5 h-5" />
-                  <span className="font-medium">Explore</span>
+                  <span className="font-medium text-sm">Explore</span>
                 </Link>
                 <Link
                   to={`/profile/${user?.username}`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
                 >
                   <MdPerson className="w-5 h-5" />
-                  <span className="font-medium">Profile</span>
+                  <span className="font-medium text-sm">Profile</span>
                 </Link>
                 <Link
                   to="/settings"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
                 >
                   <MdSettings className="w-5 h-5" />
-                  <span className="font-medium">Settings</span>
+                  <span className="font-medium text-sm">Settings</span>
                 </Link>
                 <button
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors w-full text-left"
+                  className="flex items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors w-full text-left"
                 >
                   <MdLogout className="w-5 h-5" />
-                  <span className="font-medium">Logout</span>
+                  <span className="font-medium text-sm">Logout</span>
                 </button>
               </nav>
             </div>
@@ -262,7 +262,7 @@ export function Header() {
       {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-6 right-6 p-3 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 hover:shadow-xl transition-all duration-300 transform z-40 ${
+        className={`fixed bottom-6 right-6 p-3 bg-zinc-900 text-white rounded-full shadow-lg hover:bg-zinc-800 hover:shadow-xl transition-all duration-300 transform z-40 ${
           showScrollTop
             ? "translate-y-0 opacity-100"
             : "translate-y-10 opacity-0 pointer-events-none"

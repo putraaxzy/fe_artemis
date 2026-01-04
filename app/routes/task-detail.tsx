@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { taskService, type TaskDetail, type Penugasan } from "../services/api";
+import { STORAGE_URL } from "../config/api";
 import { useAuth } from "../hooks/useAuth";
 import { Header } from "../components/Header";
-import { Card } from "../components/Card";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -12,23 +12,30 @@ import {
   MdFilePresent,
   MdPeople,
   MdCheck,
-  MdClose,
   MdCheckCircle,
   MdCalendarToday,
   MdSchedule,
   MdDescription,
-  MdRocketLaunch,
   MdTimer,
   MdAttachFile,
   MdAudiotrack,
   MdAssignment,
-  MdBarChart,
   MdCancel,
   MdComment,
   MdDownload,
   MdWarning,
   MdSend,
   MdInfo,
+  MdArrowBack,
+  MdLocalFireDepartment,
+  MdEdit,
+  MdVisibility,
+  MdVisibilityOff,
+  MdOpenInNew,
+  MdGrade,
+  MdTrendingUp,
+  MdAccessTime,
+  MdFileDownload,
 } from "react-icons/md";
 import { FaUserGraduate } from "react-icons/fa";
 import { ConfirmModal } from "../components/Modal";
@@ -40,15 +47,92 @@ export function meta() {
   ];
 }
 
-export default function TaskDetail() {
+// Utility functions
+function getDaysUntil(dateStr: string): number {
+  const target = new Date(dateStr);
+  const now = new Date();
+  target.setHours(0, 0, 0, 0);
+  now.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatRelativeDeadline(dateStr: string): { text: string; urgent: boolean; late: boolean } {
+  const days = getDaysUntil(dateStr);
+  if (days < 0) return { text: `Terlambat ${Math.abs(days)} hari`, urgent: false, late: true };
+  if (days === 0) return { text: "Hari ini", urgent: true, late: false };
+  if (days === 1) return { text: "Besok", urgent: true, late: false };
+  if (days <= 3) return { text: `${days} hari lagi`, urgent: true, late: false };
+  if (days <= 7) return { text: `${days} hari lagi`, urgent: false, late: false };
+  return { text: new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short" }), urgent: false, late: false };
+}
+
+// Progress Ring Component
+function ProgressRing({ progress, size = 48, strokeWidth = 4 }: { progress: number; size?: number; strokeWidth?: number }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-zinc-200" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="text-zinc-900 transition-all duration-500" />
+      </svg>
+      <span className="absolute text-xs font-bold text-zinc-900">{Math.round(progress)}%</span>
+    </div>
+  );
+}
+
+// Status Badge Component
+function StatusBadge({ status, isPemberitahuan }: { status: string; isPemberitahuan?: boolean }) {
+  if (isPemberitahuan) {
+    return status === "selesai" ? (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-900 text-white text-xs font-medium">
+        <MdCheck className="w-3 h-3" /> Sudah Dibaca
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-100 text-zinc-600 text-xs font-medium">
+        <MdSchedule className="w-3 h-3" /> Belum Dibaca
+      </span>
+    );
+  }
+
+  const configs: Record<string, { bg: string; text: string; icon: React.ReactNode; label: string }> = {
+    pending: { bg: "bg-zinc-100", text: "text-zinc-700", icon: <MdSchedule className="w-3 h-3" />, label: "Belum Dikumpulkan" },
+    dikirim: { bg: "bg-amber-50", text: "text-amber-700", icon: <MdAccessTime className="w-3 h-3" />, label: "Menunggu Penilaian" },
+    selesai: { bg: "bg-emerald-50", text: "text-emerald-700", icon: <MdCheckCircle className="w-3 h-3" />, label: "Diterima" },
+    ditolak: { bg: "bg-red-50", text: "text-red-700", icon: <MdCancel className="w-3 h-3" />, label: "Ditolak" },
+  };
+
+  const config = configs[status] || configs.pending;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${config.bg} ${config.text} text-xs font-medium`}>
+      {config.icon} {config.label}
+    </span>
+  );
+}
+
+// Stat Card Component
+function StatCard({ label, value, color = "zinc" }: { label: string; value: number; color?: "zinc" | "amber" | "emerald" | "red" }) {
+  const colors = {
+    zinc: "bg-zinc-50 border-zinc-200 text-zinc-900",
+    amber: "bg-amber-50 border-amber-200 text-amber-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    red: "bg-red-50 border-red-200 text-red-900",
+  };
+
+  return (
+    <div className={`p-3 sm:p-4 rounded-xl border ${colors[color]}`}>
+      <p className="text-[10px] sm:text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xl sm:text-2xl font-bold">{value}</p>
+    </div>
+  );
+}
+
+export default function TaskDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const {
-    isAuthenticated,
-    isGuru,
-    isSiswa,
-    isLoading: authLoading,
-  } = useAuth();
+  const { isAuthenticated, isGuru, isSiswa, isLoading: authLoading } = useAuth();
 
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,14 +145,10 @@ export default function TaskDetail() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Guru grading state
-  const [gradingPenugasanId, setGradingPenugasanId] = useState<number | null>(
-    null
-  );
+  const [gradingPenugasanId, setGradingPenugasanId] = useState<number | null>(null);
   const [gradeNilai, setGradeNilai] = useState("");
   const [gradeCatatan, setGradeCatatan] = useState("");
-  const [gradeStatus, setGradeStatus] = useState<"selesai" | "ditolak">(
-    "selesai"
-  );
+  const [gradeStatus, setGradeStatus] = useState<"selesai" | "ditolak">("selesai");
   const [isGrading, setIsGrading] = useState(false);
 
   const fetchTaskDetail = async () => {
@@ -80,33 +160,24 @@ export default function TaskDetail() {
     try {
       setIsLoading(true);
       const response = await taskService.getTaskDetail(parseInt(id));
-
       if (response.berhasil) {
         setTask(response.data);
       } else {
         setError(response.pesan || "Gagal memuat detail tugas");
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat memuat detail tugas."
-      );
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat memuat detail tugas.");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
+    if (authLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
-
     fetchTaskDetail();
   }, [isAuthenticated, authLoading, navigate, id]);
 
@@ -121,8 +192,6 @@ export default function TaskDetail() {
       setSubmitError("Harap masukkan link Google Drive");
       return;
     }
-
-
 
     setShowConfirmModal(true);
   };
@@ -141,109 +210,81 @@ export default function TaskDetail() {
       if (response.berhasil) {
         setSubmitSuccess(true);
         setLinkDrive("");
-        // Refresh task detail to show updated status
         await fetchTaskDetail();
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 2000);
+        setTimeout(() => navigate("/dashboard"), 2000);
       } else {
         setSubmitError(response.pesan || "Gagal mengumpulkan tugas");
       }
     } catch (err) {
-      setSubmitError(
-        err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat mengumpulkan tugas."
-      );
+      setSubmitError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengumpulkan tugas.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGradeSubmit = async (penugasanId: number) => {
-    setError(null);
+    if (!id) return;
 
-    if (
-      task?.tampilkan_nilai &&
-      gradeStatus === "selesai" &&
-      (!gradeNilai || isNaN(parseInt(gradeNilai)))
-    ) {
-      setError("Nilai harus diisi untuk status selesai");
-      return;
-    }
-
-    const nilai = gradeNilai ? parseInt(gradeNilai) : undefined;
-    if (
-      task?.tampilkan_nilai &&
-      gradeStatus === "selesai" &&
-      nilai &&
-      (nilai < 0 || nilai > 100)
-    ) {
-      setError("Nilai harus antara 0-100");
-      return;
+    if (task?.tampilkan_nilai && gradeStatus === "selesai") {
+      const nilaiNum = parseInt(gradeNilai);
+      if (isNaN(nilaiNum) || nilaiNum < 0 || nilaiNum > 100) {
+        alert("Nilai harus antara 0-100");
+        return;
+      }
     }
 
     setIsGrading(true);
-
     try {
       const response = await taskService.updateAssignmentStatus(penugasanId, {
         status: gradeStatus,
-        nilai:
-          task?.tampilkan_nilai && gradeStatus === "selesai"
-            ? nilai
-            : undefined,
+        nilai: task?.tampilkan_nilai && gradeStatus === "selesai" ? parseInt(gradeNilai) : undefined,
         catatan_guru: gradeCatatan || undefined,
       });
 
-      if (response.berhasil && id) {
-        // Refresh task detail
-        const taskResponse = await taskService.getTaskDetail(parseInt(id));
-        if (taskResponse.berhasil) {
-          setTask(taskResponse.data);
-        }
-        // Reset form
+      if (response.berhasil) {
         setGradingPenugasanId(null);
         setGradeNilai("");
         setGradeCatatan("");
         setGradeStatus("selesai");
+        await fetchTaskDetail();
       } else {
-        setError(response.pesan || "Gagal menyimpan penilaian");
+        alert(response.pesan || "Gagal memberikan nilai");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Gagal menyimpan penilaian"
-      );
+      alert(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setIsGrading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "selesai":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "dikirim":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "pending":
-        return "bg-yellow-50 text-yellow-700 border-yellow-200";
-      case "ditolak":
-        return "bg-red-50 text-red-700 border-red-200";
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
+  const handleExport = async () => {
+    if (!id) return;
+    try {
+      const blob = await taskService.exportTask(parseInt(id));
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tugas-${task?.judul || id}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal export tugas");
     }
   };
 
-  if (isLoading) {
+  // Loading State
+  if (isLoading || authLoading) {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex justify-center items-center py-12">
-              <div className="text-center">
-                <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin mb-4" />
-                <p className="text-gray-600">Loading task...</p>
-              </div>
+        <main className="min-h-screen bg-zinc-50 pt-14">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="animate-pulse space-y-4">
+              <div className="h-6 w-32 bg-zinc-200 rounded-lg" />
+              <div className="h-32 bg-zinc-200 rounded-2xl" />
+              <div className="h-48 bg-zinc-200 rounded-2xl" />
             </div>
           </div>
         </main>
@@ -251,936 +292,478 @@ export default function TaskDetail() {
     );
   }
 
+  // Error State
   if (error || !task) {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Alert
-              type="error"
-              message={error || "Tugas tidak ditemukan"}
-              onClose={() => navigate("/dashboard")}
-            />
-            <Button
-              onClick={() => navigate("/dashboard")}
-              className="mt-4"
-              variant="secondary"
-            >
-              Kembali ke Daftar Tugas
-            </Button>
+        <main className="min-h-screen bg-zinc-50 pt-14">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="bg-white rounded-2xl border border-zinc-200 p-6 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-50 flex items-center justify-center">
+                <MdWarning className="w-6 h-6 text-red-500" />
+              </div>
+              <h2 className="text-base font-semibold text-zinc-900 mb-1">Terjadi Kesalahan</h2>
+              <p className="text-sm text-zinc-600 mb-4">{error || "Tugas tidak ditemukan"}</p>
+              <Button onClick={() => navigate("/dashboard")} size="sm">Kembali ke Dashboard</Button>
+            </div>
           </div>
         </main>
       </>
     );
   }
 
+  const deadlineInfo = task.tanggal_deadline ? formatRelativeDeadline(task.tanggal_deadline) : null;
+  const isPemberitahuan = task.tipe_pengumpulan === "pemberitahuan";
+  const completionRate = task.statistik?.total_siswa ? Math.round((task.statistik.selesai / task.statistik.total_siswa) * 100) : 0;
+
   return (
     <>
       <Header />
+      
       <ConfirmModal
         isOpen={showConfirmModal}
         onConfirm={processTaskSubmission}
         onCancel={() => setShowConfirmModal(false)}
-        title={task?.tipe_pengumpulan === "pemberitahuan" ? "Konfirmasi Baca" : "Konfirmasi Pengumpulan"}
-        message={
-          task?.tipe_pengumpulan === "pemberitahuan"
-            ? "Apakah Anda yakin sudah membaca dan memahami pemberitahuan ini?"
-            : "Apakah Anda yakin ingin mengumpulkan tugas ini? Pastikan semua data sudah benar karena tugas yang sudah dikumpulkan tidak dapat diubah (kecuali diminta revisi oleh guru)."
-        }
-        confirmText={task?.tipe_pengumpulan === "pemberitahuan" ? "Ya, Saya Sudah Baca" : "Ya, Kumpulkan"}
+        title={isPemberitahuan ? "Konfirmasi Sudah Dibaca" : "Konfirmasi Pengumpulan"}
+        message={isPemberitahuan ? "Anda yakin sudah membaca pemberitahuan ini?" : "Pastikan link yang Anda masukkan sudah benar."}
+        confirmText={isPemberitahuan ? "Ya, Sudah Dibaca" : "Ya, Kumpulkan"}
         cancelText="Batal"
       />
-      <main className="min-h-screen bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <main className="min-h-screen bg-zinc-50 pt-14 pb-6">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          
           {/* Back Button */}
-          <Button
-            onClick={() => navigate("/dashboard")}
-            variant="ghost"
-            size="sm"
-            className="mb-6 hover:bg-gray-100"
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 mb-3 transition-colors"
           >
-            ← Kembali
-          </Button>
+            <MdArrowBack className="w-4 h-4" />
+            Kembali
+          </button>
 
-          {/* Task Header - Modern Card */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 leading-tight break-words">
-                  {task.judul}
-                </h1>
-                <p className="text-sm text-gray-600 flex items-center gap-2">
-                  <MdCalendarToday className="w-5 h-5" />
-                  {new Date(task.dibuat_pada).toLocaleDateString("id-ID", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
+          {/* Header Card */}
+          <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6 mb-3">
+            <div className="flex flex-col gap-4">
+              {/* Top Row: Type Badge + Edit Button */}
+              <div className="flex items-center justify-between">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                  isPemberitahuan ? "bg-blue-50 text-blue-700" : task.tipe_pengumpulan === "link" ? "bg-purple-50 text-purple-700" : "bg-zinc-100 text-zinc-700"
+                }`}>
+                  {isPemberitahuan ? <><MdInfo className="w-3.5 h-3.5" /> Pemberitahuan</> : task.tipe_pengumpulan === "link" ? <><MdLink className="w-3.5 h-3.5" /> Link</> : <><MdFilePresent className="w-3.5 h-3.5" /> Langsung</>}
+                </span>
+                {isGuru && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExport}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                    >
+                      <MdFileDownload className="w-3.5 h-3.5" /> Export
+                    </button>
+                    <button
+                      onClick={() => navigate(`/edit-task/${id}`)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors"
+                    >
+                      <MdEdit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </div>
+                )}
               </div>
-              {isGuru && (
-                <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const blob = await taskService.exportTask(Number(id));
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = `tugas_${id}_${new Date().getTime()}.xlsx`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                      } catch (err) {
-                        console.error("Export failed:", err);
-                        alert("Gagal export tugas");
-                      }
-                    }}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-base font-medium shadow-sm hover:shadow transition-all"
-                    variant="secondary"
-                    title="Export Excel"
-                  >
-                    <MdDownload className="w-5 h-5" />
-                    <span>Export Excel</span>
-                  </Button>
+
+              {/* Title */}
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-900 leading-tight break-words">
+                {task.judul}
+              </h1>
+
+              {/* Meta Info */}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+                <span className="flex items-center gap-1">
+                  <MdCalendarToday className="w-3.5 h-3.5" />
+                  {new Date(task.dibuat_pada).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MdPeople className="w-3.5 h-3.5" />
+                  {task.target === "siswa" ? "Siswa Tertentu" : "Kelas"}
+                </span>
+                {task.tampilkan_nilai ? (
+                  <span className="flex items-center gap-1 text-emerald-600">
+                    <MdVisibility className="w-3.5 h-3.5" /> Nilai Ditampilkan
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <MdVisibilityOff className="w-3.5 h-3.5" /> Nilai Disembunyikan
+                  </span>
+                )}
+              </div>
+
+              {/* Deadline Badge */}
+              {deadlineInfo && (
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl w-fit ${
+                  deadlineInfo.late ? "bg-red-50 text-red-700" : deadlineInfo.urgent ? "bg-amber-50 text-amber-700" : "bg-zinc-50 text-zinc-700"
+                }`}>
+                  {(deadlineInfo.late || deadlineInfo.urgent) && <MdLocalFireDepartment className="w-4 h-4" />}
+                  <MdTimer className="w-4 h-4" />
+                  <span className="text-xs font-medium">
+                    {deadlineInfo.late ? "Terlambat" : "Deadline"}: {deadlineInfo.text}
+                  </span>
                 </div>
-              )}
-            </div>
-
-            {/* Task Info Grid - Compact */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200">
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                <p className="text-xs text-gray-600 mb-1">Tipe</p>
-                <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
-                  {task.tipe_pengumpulan === "link" ? (
-                    <>
-                      <MdLink className="w-5 h-5 flex-shrink-0" />
-                      <span className="truncate">Online</span>
-                    </>
-                  ) : task.tipe_pengumpulan === "pemberitahuan" ? (
-                    <>
-                      <MdInfo className="w-5 h-5 flex-shrink-0" />
-                      <span className="truncate">Info</span>
-                    </>
-                  ) : (
-                    <>
-                      <MdFilePresent className="w-5 h-5 flex-shrink-0" />
-                      <span className="truncate">Langsung</span>
-                    </>
-                  )}
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                <p className="text-xs text-gray-600 mb-1">Target</p>
-                <p className="font-semibold text-gray-900 capitalize text-sm truncate">
-                  {task.target}
-                </p>
-              </div>
-              {isGuru ? (
-                <>
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-xs text-gray-600 mb-1">Total Siswa</p>
-                    <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
-                      <span className="truncate">
-                        {task.statistik.total_siswa}
-                      </span>
-                      <MdPeople className="w-5 h-5 flex-shrink-0" />
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-xs text-gray-600 mb-1">Nilai</p>
-                    <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
-                      {task.tampilkan_nilai ? (
-                        <>
-                          <MdCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
-                          <span className="truncate">Ya</span>
-                        </>
-                      ) : (
-                        <>
-                          <MdCancel className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                          <span className="truncate">Tidak</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-xs text-gray-600 mb-1">Total Siswa</p>
-                    <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
-                      <span className="truncate">{task.total_siswa || 0}</span>
-                      <MdPeople className="w-5 h-5 flex-shrink-0" />
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-xs text-gray-600 mb-1">
-                      Tampilkan Nilai
-                    </p>
-                    <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
-                      {task.tampilkan_nilai ? (
-                        <>
-                          <MdCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
-                          <span className="truncate">Ya</span>
-                        </>
-                      ) : (
-                        <>
-                          <MdCancel className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                          <span className="truncate">Tidak</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </>
               )}
             </div>
           </div>
 
-          {/* Task Description & File */}
-          {(task.deskripsi ||
-            task.file_detail ||
-            task.tanggal_mulai ||
-            task.tanggal_deadline) && (
-              <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <MdDescription className="text-2xl text-gray-700" />
-                  Detail Tugas
-                </h2>
-                <div className="space-y-6">
-                  {task.deskripsi && (
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                        Deskripsi
-                      </p>
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <p className="text-gray-900 whitespace-pre-wrap break-words leading-relaxed">
-                          {task.deskripsi}
+          {/* Description & Dates */}
+          {(task.deskripsi || task.tanggal_mulai || task.tanggal_deadline || task.file_detail) && (
+            <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6 mb-3">
+              <h2 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <MdDescription className="w-4 h-4" /> Detail
+              </h2>
+
+              {task.deskripsi && (
+                <div className="bg-zinc-50 rounded-xl p-3 sm:p-4 border border-zinc-100 mb-4">
+                  <p className="text-sm text-zinc-700 whitespace-pre-wrap break-words leading-relaxed">{task.deskripsi}</p>
+                </div>
+              )}
+
+              {/* Dates */}
+              {(task.tanggal_mulai || task.tanggal_deadline) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {task.tanggal_mulai && (
+                    <div className="flex items-center gap-3 p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0">
+                        <MdSchedule className="w-4 h-4 text-zinc-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Mulai</p>
+                        <p className="text-xs font-medium text-zinc-900 truncate">
+                          {new Date(task.tanggal_mulai).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
                     </div>
                   )}
-
-                  {(task.tanggal_mulai || task.tanggal_deadline) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {task.tanggal_mulai && (
-                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-1">
-                            <MdRocketLaunch className="text-base" /> Mulai
-                          </p>
-                          <p className="text-gray-900 font-medium">
-                            {new Date(task.tanggal_mulai).toLocaleString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </p>
-                        </div>
-                      )}
-                      {task.tanggal_deadline && (
-                        <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2 flex items-center gap-1">
-                            <MdTimer className="text-base" /> Deadline
-                          </p>
-                          <p className="text-red-900 font-bold">
-                            {new Date(task.tanggal_deadline).toLocaleString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </p>
-                        </div>
-                      )}
+                  {task.tanggal_deadline && (
+                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${
+                      deadlineInfo?.late ? "bg-red-50 border-red-200" : deadlineInfo?.urgent ? "bg-amber-50 border-amber-200" : "bg-zinc-50 border-zinc-100"
+                    }`}>
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        deadlineInfo?.late ? "bg-red-100 text-red-600" : deadlineInfo?.urgent ? "bg-amber-100 text-amber-600" : "bg-white border border-zinc-200 text-zinc-600"
+                      }`}>
+                        <MdTimer className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`text-[10px] uppercase tracking-wide ${deadlineInfo?.late ? "text-red-600" : deadlineInfo?.urgent ? "text-amber-600" : "text-zinc-500"}`}>Deadline</p>
+                        <p className={`text-xs font-medium truncate ${deadlineInfo?.late ? "text-red-700" : deadlineInfo?.urgent ? "text-amber-700" : "text-zinc-900"}`}>
+                          {new Date(task.tanggal_deadline).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
                     </div>
                   )}
-
-                  {task.file_detail &&
-                    (() => {
-                      const fileUrl = `https://engine.ptraazxtt.my.id/storage/${task.file_detail}`;
-                      const fileName =
-                        task.file_detail.split("/").pop() || "file";
-                      const fileExt =
-                        fileName.split(".").pop()?.toLowerCase() || "";
-
-                      const imageFormats = [
-                        "jpg",
-                        "jpeg",
-                        "png",
-                        "gif",
-                        "webp",
-                        "svg",
-                        "bmp",
-                      ];
-                      const videoFormats = [
-                        "mp4",
-                        "webm",
-                        "ogg",
-                        "mov",
-                        "avi",
-                        "mkv",
-                      ];
-                      const audioFormats = ["mp3", "wav", "ogg", "aac", "m4a"];
-
-                      return (
-                        <div>
-                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-1">
-                            <MdAttachFile className="text-base" /> File Lampiran
-                          </p>
-
-                          {imageFormats.includes(fileExt) && (
-                            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                              <img
-                                src={fileUrl}
-                                alt="Task attachment"
-                                className="w-full h-auto max-w-full object-contain"
-                              />
-                            </div>
-                          )}
-
-                          {videoFormats.includes(fileExt) && (
-                            <div className="bg-black rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                              <video
-                                controls
-                                className="w-full h-auto max-w-full"
-                                preload="metadata"
-                              >
-                                <source src={fileUrl} type={`video/${fileExt}`} />
-                                Browser Anda tidak mendukung video player.
-                              </video>
-                            </div>
-                          )}
-
-                          {audioFormats.includes(fileExt) && (
-                            <div className="bg-gray-50 rounded-xl p-6 shadow-sm border border-gray-200">
-                              <audio
-                                controls
-                                className="w-full"
-                                preload="metadata"
-                              >
-                                <source src={fileUrl} type={`audio/${fileExt}`} />
-                                Browser Anda tidak mendukung audio player.
-                              </audio>
-                              <p className="text-sm text-gray-600 mt-3 text-center flex items-center justify-center gap-2">
-                                <MdAudiotrack /> {fileName}
-                              </p>
-                            </div>
-                          )}
-
-                          {!imageFormats.includes(fileExt) &&
-                            !videoFormats.includes(fileExt) &&
-                            !audioFormats.includes(fileExt) && (
-                              <a
-                                href={fileUrl}
-                                download
-                                className="inline-flex items-center gap-3 px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 hover:shadow-md transition-all font-medium"
-                              >
-                                <MdDownload className="w-5 h-5" />
-                                Download {fileName}
-                              </a>
-                            )}
-                        </div>
-                      );
-                    })()}
                 </div>
-              </div>
-            )}
+              )}
 
-          {/* Guru View - Statistics */}
+              {/* File Attachment */}
+              {task.file_detail && (() => {
+                const fileUrl = `${STORAGE_URL}/${task.file_detail}`;
+                const fileName = task.file_detail.split("/").pop() || "file";
+                const fileExt = fileName.split(".").pop()?.toLowerCase() || "";
+                const imageFormats = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+                const videoFormats = ["mp4", "webm", "ogg", "mov", "avi", "mkv"];
+                const audioFormats = ["mp3", "wav", "ogg", "aac", "m4a"];
+
+                return (
+                  <div>
+                    <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                      <MdAttachFile className="w-3.5 h-3.5" /> Lampiran
+                    </p>
+                    {imageFormats.includes(fileExt) && (
+                      <div className="rounded-xl overflow-hidden border border-zinc-200">
+                        <img src={fileUrl} alt="Lampiran" className="w-full h-auto" />
+                      </div>
+                    )}
+                    {videoFormats.includes(fileExt) && (
+                      <div className="rounded-xl overflow-hidden bg-zinc-900">
+                        <video controls className="w-full h-auto" preload="metadata">
+                          <source src={fileUrl} type={`video/${fileExt}`} />
+                        </video>
+                      </div>
+                    )}
+                    {audioFormats.includes(fileExt) && (
+                      <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                        <audio controls className="w-full" preload="metadata">
+                          <source src={fileUrl} type={`audio/${fileExt}`} />
+                        </audio>
+                        <p className="text-xs text-zinc-500 mt-2 text-center flex items-center justify-center gap-1">
+                          <MdAudiotrack className="w-3.5 h-3.5" /> {fileName}
+                        </p>
+                      </div>
+                    )}
+                    {!imageFormats.includes(fileExt) && !videoFormats.includes(fileExt) && !audioFormats.includes(fileExt) && (
+                      <a href={fileUrl} download className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl hover:bg-zinc-800 transition-colors text-sm font-medium">
+                        <MdDownload className="w-4 h-4" /> Download {fileName}
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Guru: Statistics */}
           {isGuru && (
-            <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <MdBarChart className="text-2xl" />
-                Statistik Pengumpulan
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {task.tipe_pengumpulan === "pemberitahuan" ? (
+            <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6 mb-3">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <MdTrendingUp className="w-4 h-4" /> Statistik
+                </h2>
+                <ProgressRing progress={completionRate} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                {isPemberitahuan ? (
                   <>
-                    {/* Pemberitahuan Stats - Only 2 cards */}
-                    <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 hover:shadow-sm transition-shadow">
-                      <p className="text-xs text-gray-600 font-semibold uppercase mb-2">
-                        Belum Membaca
-                      </p>
-                      <p className="text-3xl font-bold text-gray-900">
-                        {task.statistik.pending}
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 hover:shadow-sm transition-shadow">
-                      <p className="text-xs text-blue-700 font-semibold uppercase mb-2">
-                        Sudah Membaca
-                      </p>
-                      <p className="text-3xl font-bold text-blue-900">
-                        {task.statistik.selesai}
-                      </p>
-                    </div>
+                    <StatCard label="Belum Membaca" value={task.statistik.pending} />
+                    <StatCard label="Sudah Membaca" value={task.statistik.selesai} color="emerald" />
                   </>
                 ) : (
                   <>
-                    {/* Regular Task Stats */}
-                    <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 hover:shadow-sm transition-shadow">
-                      <p className="text-xs text-gray-600 font-semibold uppercase mb-2">
-                        Menunggu
-                      </p>
-                      <p className="text-3xl font-bold text-gray-900">
-                        {task.statistik.pending}
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 hover:shadow-sm transition-shadow">
-                      <p className="text-xs text-blue-700 font-semibold uppercase mb-2">
-                        Dikirim
-                      </p>
-                      <p className="text-3xl font-bold text-blue-900">
-                        {task.statistik.dikirim}
-                      </p>
-                    </div>
-                    <div className="bg-green-50 p-5 rounded-xl border border-green-200 hover:shadow-sm transition-shadow">
-                      <p className="text-xs text-green-700 font-semibold uppercase mb-2">
-                        Selesai
-                      </p>
-                      <p className="text-3xl font-bold text-green-900">
-                        {task.statistik.selesai}
-                      </p>
-                    </div>
-                    <div className="bg-red-50 p-5 rounded-xl border border-red-200 hover:shadow-sm transition-shadow">
-                      <p className="text-xs text-red-700 font-semibold uppercase mb-2">
-                        Ditolak
-                      </p>
-                      <p className="text-3xl font-bold text-red-900">
-                        {task.statistik.ditolak}
-                      </p>
-                    </div>
+                    <StatCard label="Menunggu" value={task.statistik.pending} />
+                    <StatCard label="Dikirim" value={task.statistik.dikirim} color="amber" />
+                    <StatCard label="Selesai" value={task.statistik.selesai} color="emerald" />
+                    <StatCard label="Ditolak" value={task.statistik.ditolak} color="red" />
                   </>
                 )}
               </div>
             </div>
           )}
 
-          {/* Siswa View - Submit Form or Status */}
+          {/* Siswa: Submission Status */}
           {isSiswa && task.penugasan && task.penugasan[0] && (
-            <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                {task.tipe_pengumpulan === "pemberitahuan" ? (
-                  <>
-                    <MdInfo className="text-3xl text-blue-600" />
-                    Status Informasi
-                  </>
-                ) : (
-                  <>
-                    {task.penugasan[0].status === "selesai" ? (
-                      <MdCheckCircle className="text-3xl text-green-600" />
-                    ) : task.penugasan[0].status === "ditolak" ? (
-                      <MdCancel className="text-3xl text-gray-900" />
-                    ) : task.penugasan[0].status === "dikirim" ? (
-                      <MdSchedule className="text-3xl text-blue-600" />
-                    ) : (
-                      <MdAssignment className="text-3xl text-gray-700" />
-                    )}
-                    Status Pengumpulan
-                  </>
-                )}
-              </h2>
+            <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6 mb-3">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <MdAssignment className="w-4 h-4" /> {isPemberitahuan ? "Status" : "Pengumpulan"}
+                </h2>
+                <StatusBadge status={task.penugasan[0].status} isPemberitahuan={isPemberitahuan} />
+              </div>
 
-              {/* Rejection Alert - Prominent at Top */}
+              {/* Rejection Alert */}
               {task.penugasan[0].status === "ditolak" && (
-                <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 animate-fadeIn">
-                  <div className="p-3 bg-red-100 rounded-full flex-shrink-0 self-start sm:self-center text-gray-900">
-                    <MdCancel className="text-2xl" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-red-900 text-lg mb-1">
-                      Tugas Perlu Revisi
-                    </h3>
-                    <p className="text-red-700 text-sm leading-relaxed mb-3">
-                      Guru telah menolak pengumpulan tugas Anda. Silakan periksa
-                      catatan guru di bawah ini dan kumpulkan ulang tugas Anda
-                      segera.
-                    </p>
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <MdCancel className="w-4 h-4 text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-red-800 mb-0.5">Perlu Revisi</h3>
+                      <p className="text-xs text-red-700">Silakan periksa catatan guru dan kumpulkan ulang.</p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Display submission status */}
-              <div className="mb-6 bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {task.tipe_pengumpulan === "pemberitahuan" ? "Status" : "Status Tugas"}
-                  </span>
-                  <span
-                    className={`px-4 py-2 rounded-full text-xs font-bold ${task.tipe_pengumpulan === "pemberitahuan"
-                      ? task.penugasan[0].status === "selesai"
-                        ? "bg-blue-100 text-blue-800 border border-blue-300"
-                        : "bg-gray-100 text-gray-800 border border-gray-300"
-                      : task.penugasan[0].status === "pending"
-                        ? "bg-gray-100 text-gray-800 border border-gray-300"
-                        : task.penugasan[0].status === "dikirim"
-                          ? "bg-blue-100 text-blue-800 border border-blue-300"
-                          : task.penugasan[0].status === "selesai"
-                            ? "bg-green-100 text-green-800 border border-green-300"
-                            : "bg-red-100 text-red-800 border border-red-300"
-                      }`}
-                  >
-                    {task.tipe_pengumpulan === "pemberitahuan"
-                      ? task.penugasan[0].status === "selesai"
-                        ? "Sudah Dibaca"
-                        : "Belum Dibaca"
-                      : task.penugasan[0].status === "pending"
-                        ? "Belum Dikumpulkan"
-                        : task.penugasan[0].status === "dikirim"
-                          ? "Menunggu Penilaian"
-                          : task.penugasan[0].status === "selesai"
-                            ? "Diterima"
-                            : "Ditolak"}
-                  </span>
-                </div>
-
+              {/* Submission Info */}
+              <div className="bg-zinc-50 rounded-xl border border-zinc-100 divide-y divide-zinc-100">
                 {task.penugasan[0].link_drive && (
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                    <span className="text-sm font-semibold text-gray-700">
-                      Link Pengumpulan
-                    </span>
-                    <a
-                      href={task.penugasan[0].link_drive}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 text-sm font-semibold hover:underline flex items-center gap-1"
-                    >
-                      <MdLink /> Lihat File
+                  <div className="flex items-center justify-between p-3">
+                    <span className="text-xs text-zinc-600">Link</span>
+                    <a href={task.penugasan[0].link_drive} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-zinc-900 hover:underline">
+                      <MdOpenInNew className="w-3.5 h-3.5" /> Lihat
                     </a>
                   </div>
                 )}
-
                 {task.penugasan[0].tanggal_pengumpulan && (
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                    <span className="text-sm font-semibold text-gray-700">
-                      Waktu Pengumpulan
-                    </span>
-                    <span className="text-sm text-gray-900 font-medium">
-                      {new Date(
-                        task.penugasan[0].tanggal_pengumpulan
-                      ).toLocaleString("id-ID", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                  <div className="flex items-center justify-between p-3">
+                    <span className="text-xs text-zinc-600">{isPemberitahuan ? "Dibaca" : "Dikumpulkan"}</span>
+                    <span className="text-xs font-medium text-zinc-900">
+                      {new Date(task.penugasan[0].tanggal_pengumpulan).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
                 )}
-
-                {task.tampilkan_nilai &&
-                  task.penugasan[0].nilai !== null &&
-                  task.penugasan[0].nilai !== undefined && (
-                    <div className="pt-3 border-t border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-700">
-                          Nilai Anda
-                        </span>
-                        <span className="text-3xl font-bold text-gray-900">
-                          {task.penugasan[0].nilai}
-                          <span className="text-lg text-gray-600">/100</span>
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div
-                          className={`h-3 rounded-full transition-all ${task.penugasan[0].nilai >= 75
-                            ? "bg-green-500"
-                            : task.penugasan[0].nilai >= 60
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
-                            }`}
-                          style={{ width: `${task.penugasan[0].nilai}%` }}
-                        />
-                      </div>
+                {task.tampilkan_nilai && task.penugasan[0].nilai !== null && task.penugasan[0].nilai !== undefined && (
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-zinc-600">Nilai</span>
+                      <span className="text-lg font-bold text-zinc-900">{task.penugasan[0].nilai}<span className="text-xs text-zinc-500">/100</span></span>
                     </div>
-                  )}
-
+                    <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                      <div className={`h-1.5 rounded-full transition-all ${task.penugasan[0].nilai >= 75 ? "bg-emerald-500" : task.penugasan[0].nilai >= 60 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${task.penugasan[0].nilai}%` }} />
+                    </div>
+                  </div>
+                )}
                 {task.penugasan[0].catatan_guru && (
-                  <div className="pt-3 border-t border-gray-200">
-                    <span className="text-sm font-semibold text-gray-700 block mb-2 flex items-center gap-2">
-                      <MdComment /> Catatan Guru
-                    </span>
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
-                      <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-                        {task.penugasan[0].catatan_guru}
-                      </p>
+                  <div className="p-3">
+                    <p className="text-xs text-zinc-600 mb-1.5 flex items-center gap-1"><MdComment className="w-3.5 h-3.5" /> Catatan Guru</p>
+                    <div className="bg-white rounded-lg p-2 border border-zinc-200">
+                      <p className="text-xs text-zinc-800 whitespace-pre-wrap">{task.penugasan[0].catatan_guru}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {task.tipe_pengumpulan === "pemberitahuan" && task.penugasan[0].status === "selesai" && (
-                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <p className="text-sm text-blue-800 flex items-center gap-2">
-                    <MdCheckCircle className="text-blue-600 text-lg" />
-                    Anda telah mengkonfirmasi membaca informasi ini pada {new Date(task.penugasan[0].tanggal_pengumpulan || "").toLocaleString("id-ID")}
-                  </p>
+              {/* Submit Form */}
+              {(task.penugasan[0].status === "pending" || task.penugasan[0].status === "ditolak") && (
+                <div className="mt-4 pt-4 border-t border-zinc-100">
+                  {submitSuccess && <Alert type="success" message="Berhasil! Mengalihkan..." className="mb-3" />}
+                  {submitError && <Alert type="error" message={submitError} onClose={() => setSubmitError("")} className="mb-3" />}
+
+                  <form onSubmit={handleSubmitTask} className="space-y-3">
+                    {task.tipe_pengumpulan === "link" && (
+                      <Input
+                        label="Link Google Drive"
+                        type="url"
+                        placeholder="https://drive.google.com/..."
+                        value={linkDrive}
+                        onChange={(e) => setLinkDrive(e.target.value)}
+                        required
+                        disabled={isSubmitting}
+                        helperText="Pastikan link dapat diakses"
+                      />
+                    )}
+                    {isPemberitahuan && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p className="text-xs text-blue-800 flex items-center gap-1.5">
+                          <MdInfo className="w-4 h-4 flex-shrink-0" />
+                          Klik tombol di bawah untuk konfirmasi sudah membaca.
+                        </p>
+                      </div>
+                    )}
+                    <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
+                      {isPemberitahuan ? <><MdCheck className="w-4 h-4" /> Tandai Sudah Dibaca</> : <><MdSend className="w-4 h-4" /> Kumpulkan Tugas</>}
+                    </Button>
+                  </form>
                 </div>
               )}
 
-              {/* Submit form - show if pending or rejected (for resubmission) */}
-              {(task.penugasan[0].status === "pending" ||
-                task.penugasan[0].status === "ditolak") && (
-                  <>
-                    {submitSuccess && (
-                      <Alert
-                        type="success"
-                        message="Tugas berhasil dikumpulkan! Mengalihkan..."
-                        className="mb-4"
-                      />
-                    )}
-
-                    {submitError && (
-                      <Alert
-                        type="error"
-                        message={submitError}
-                        onClose={() => setSubmitError("")}
-                        className="mb-4"
-                      />
-                    )}
-
-                    <form onSubmit={handleSubmitTask} className="space-y-4">
-                      {task.tipe_pengumpulan === "link" && (
-                        <Input
-                          label="Link Google Drive"
-                          type="url"
-                          placeholder="https://drive.google.com/file/d/..."
-                          value={linkDrive}
-                          onChange={(e) => setLinkDrive(e.target.value)}
-                          required
-                          disabled={isSubmitting}
-                          helperText="Tempelkan link Google Drive Anda di sini"
-                        />
-                      )}
-
-                      {task.tipe_pengumpulan === "pemberitahuan" && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                          <p className="text-blue-800 text-sm flex items-center gap-2">
-                            <MdCheckCircle className="text-lg" />
-                            Ini adalah pemberitahuan. Klik tombol di bawah untuk konfirmasi Anda sudah membacanya.
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="flex justify-end pt-2">
-                        <Button
-                          type="submit"
-                          isLoading={isSubmitting}
-                          className="w-full sm:w-auto flex items-center justify-center gap-2"
-                        >
-                          {task.tipe_pengumpulan === "pemberitahuan" ? (
-                            <>
-                              <MdCheck className="text-lg" />
-                              Tandai Sudah Dibaca
-                            </>
-                          ) : (
-                            <>
-                              <MdSend className="text-lg" />
-                              Kumpulkan Tugas
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-
-
-                  </>
-                )}
-
-              {/* Message if already submitted */}
+              {/* Waiting Message */}
               {task.penugasan[0].status === "dikirim" && (
-                <>
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                    <MdSchedule className="text-3xl text-blue-600 flex-shrink-0" />
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <div className="flex gap-2">
+                    <MdSchedule className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-blue-900 mb-1">
-                        Menunggu Penilaian
-                      </p>
-                      <p className="text-blue-700 text-sm">
-                        Tugas Anda sedang direview oleh guru. Anda akan
-                        mendapatkan notifikasi setelah dinilai.
-                      </p>
+                      <p className="text-xs font-medium text-amber-800">Menunggu Penilaian</p>
+                      <p className="text-[10px] text-amber-700">Tugas sedang direview guru.</p>
                     </div>
                   </div>
-                </>
+                </div>
               )}
             </div>
           )}
 
-          {/* Guru View - Submissions List */}
+          {/* Guru: Submissions List */}
           {isGuru && task.penugasan && task.penugasan.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <MdPeople className="text-3xl text-blue-600" />
-                {task.tipe_pengumpulan === "pemberitahuan" ? "Daftar Pembaca" : "Pengumpulan Siswa"} (
-                {
-                  task.penugasan.filter(
-                    (p) =>
-                      p.siswa.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      p.siswa.kelas
-                        ?.toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      p.siswa.jurusan
-                        ?.toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                  ).length
-                }
-                )
-              </h2>
-
-              {/* Search Input */}
-              <div className="mb-6">
-                <Input
-                  type="text"
-                  placeholder="Cari siswa berdasarkan nama, kelas, atau jurusan..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
+            <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <MdPeople className="w-4 h-4" /> {isPemberitahuan ? "Daftar Pembaca" : "Pengumpulan Siswa"}
+                </h2>
+                <span className="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded-md">
+                  {task.penugasan.filter(p => p.siswa.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.siswa.kelas?.toLowerCase().includes(searchQuery.toLowerCase())).length} siswa
+                </span>
               </div>
 
-              <div className="space-y-4">
+              {/* Search */}
+              <div className="mb-4">
+                <Input type="text" placeholder="Cari nama atau kelas..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              </div>
+
+              {/* List */}
+              <div className="space-y-2">
                 {task.penugasan
-                  .filter(
-                    (p) =>
-                      p.siswa.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      p.siswa.kelas
-                        ?.toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      p.siswa.jurusan
-                        ?.toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                  )
+                  .filter(p => p.siswa.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.siswa.kelas?.toLowerCase().includes(searchQuery.toLowerCase()) || p.siswa.jurusan?.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map((penugasan) => (
-                    <div
-                      key={penugasan.id}
-                      className="bg-gray-50 rounded-xl p-5 hover:bg-gray-100 transition-colors border border-gray-200"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <div key={penugasan.id} className="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-base truncate">
-                            {penugasan.siswa.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 flex items-center gap-1">
-                            <FaUserGraduate className="w-4 h-4 flex-shrink-0" />{" "}
-                            <span className="truncate">
-                              {penugasan.siswa.kelas} -{" "}
-                              {penugasan.siswa.jurusan}
-                            </span>
+                          <h3 className="text-sm font-medium text-zinc-900 truncate">{penugasan.siswa.name}</h3>
+                          <p className="text-[10px] text-zinc-500 flex items-center gap-1">
+                            <FaUserGraduate className="w-2.5 h-2.5" />
+                            {penugasan.siswa.kelas} - {penugasan.siswa.jurusan}
                           </p>
                           {penugasan.tanggal_pengumpulan && (
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <MdCalendarToday className="w-3 h-3 flex-shrink-0" />
-                              {new Date(
-                                penugasan.tanggal_pengumpulan
-                              ).toLocaleDateString("id-ID")}
+                            <p className="text-[10px] text-zinc-400 mt-0.5">
+                              {new Date(penugasan.tanggal_pengumpulan).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                             </p>
                           )}
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`px-4 py-2 rounded-full text-xs font-bold shadow-sm flex items-center gap-1 ${task.tipe_pengumpulan === "pemberitahuan"
-                              ? penugasan.status === "selesai"
-                                ? "bg-blue-100 text-blue-800 border border-blue-300"
-                                : "bg-gray-100 text-gray-800 border border-gray-300"
-                              : getStatusColor(penugasan.status)
-                              }`}
-                          >
-                            {task.tipe_pengumpulan === "pemberitahuan" ? (
-                              penugasan.status === "selesai" ? (
-                                <>
-                                  <MdCheck className="w-4 h-4" /> Sudah Membaca
-                                </>
-                              ) : (
-                                "Belum Membaca"
-                              )
-                            ) : (
-                              <>
-                                {penugasan.status === "selesai" ? (
-                                  <MdCheck className="w-4 h-4" />
-                                ) : penugasan.status === "ditolak" ? (
-                                  <MdCancel className="w-4 h-4 text-gray-900" />
-                                ) : null}
-                                {penugasan.status.charAt(0).toUpperCase() +
-                                  penugasan.status.slice(1)}
-                              </>
-                            )}
-                          </span>
-
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <StatusBadge status={penugasan.status} isPemberitahuan={isPemberitahuan} />
                           {penugasan.link_drive && (
-                            <a
-                              href={penugasan.link_drive}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
-                            >
-                              🔗 Lihat
+                            <a href={penugasan.link_drive} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-zinc-900 text-white text-[10px] font-medium rounded-lg hover:bg-zinc-800 transition-colors inline-flex items-center gap-1">
+                              <MdOpenInNew className="w-3 h-3" /> Lihat
                             </a>
                           )}
                         </div>
                       </div>
 
-                      {/* Grade Display or Form - Disable for Pemberitahuan */}
-                      {task.tipe_pengumpulan !== "pemberitahuan" && penugasan.status === "dikirim" &&
-                        gradingPenugasanId === penugasan.id ? (
-                        <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-                          <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                            <MdDescription /> Berikan Penilaian
-                          </h4>
-
-                          <div className="space-y-3">
+                      {/* Grading Form */}
+                      {!isPemberitahuan && penugasan.status === "dikirim" && gradingPenugasanId === penugasan.id && (
+                        <div className="mt-3 pt-3 border-t border-zinc-200 space-y-3">
+                          <h4 className="text-xs font-medium text-zinc-900 flex items-center gap-1"><MdGrade className="w-3.5 h-3.5" /> Penilaian</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Status Penilaian
-                              </label>
-                              <select
-                                value={gradeStatus}
-                                onChange={(e) =>
-                                  setGradeStatus(
-                                    e.target.value as "selesai" | "ditolak"
-                                  )
-                                }
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-gray-900"
-                              >
+                              <label className="block text-[10px] font-medium text-zinc-600 mb-1">Status</label>
+                              <select value={gradeStatus} onChange={(e) => setGradeStatus(e.target.value as "selesai" | "ditolak")} className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent bg-white text-xs">
                                 <option value="selesai">Diterima</option>
                                 <option value="ditolak">Ditolak</option>
                               </select>
                             </div>
-
-                            {task.tampilkan_nilai &&
-                              gradeStatus === "selesai" && (
-                                <div>
-                                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Nilai (0-100)
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={gradeNilai}
-                                    onChange={(e) =>
-                                      setGradeNilai(e.target.value)
-                                    }
-                                    placeholder="Masukkan nilai"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
-                                  />
-                                </div>
-                              )}
-
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Catatan (Opsional)
-                              </label>
-                              <textarea
-                                value={gradeCatatan}
-                                onChange={(e) =>
-                                  setGradeCatatan(e.target.value)
-                                }
-                                placeholder="Berikan feedback untuk siswa..."
-                                rows={3}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-gray-900 placeholder-gray-400"
-                              />
-                            </div>
-
-                            <div className="flex gap-2 pt-2">
-                              <Button
-                                onClick={() => handleGradeSubmit(penugasan.id)}
-                                isLoading={isGrading}
-                                className="flex-1 bg-gray-900 hover:bg-gray-800"
-                              >
-                                💾 Simpan Penilaian
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                onClick={() => {
-                                  setGradingPenugasanId(null);
-                                  setGradeNilai("");
-                                  setGradeCatatan("");
-                                  setGradeStatus("selesai");
-                                }}
-                                disabled={isGrading}
-                                className="shadow-sm"
-                              >
-                                Batal
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : task.tipe_pengumpulan !== "pemberitahuan" && penugasan.status === "dikirim" ? (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <Button
-                            size="sm"
-                            onClick={() => setGradingPenugasanId(penugasan.id)}
-                            className="bg-gray-900 hover:bg-gray-800"
-                          >
-                            Beri Nilai
-                          </Button>
-                        </div>
-                      ) : null}
-
-                      {(penugasan.nilai !== undefined ||
-                        penugasan.catatan_guru) && (
-                          <div className="mt-3 pt-3 border-t border-gray-200 bg-gray-50/50 rounded-lg p-4">
-                            {penugasan.nilai !== undefined && (
-                              <div className="mb-3">
-                                <p className="text-sm text-gray-600 mb-1">
-                                  Nilai:
-                                </p>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-2xl font-bold text-gray-900">
-                                    {penugasan.nilai}
-                                    <span className="text-base text-gray-600">
-                                      /100
-                                    </span>
-                                  </span>
-                                  <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                    <div
-                                      className={`h-2.5 rounded-full ${penugasan.nilai >= 75
-                                        ? "bg-green-500"
-                                        : penugasan.nilai >= 60
-                                          ? "bg-yellow-500"
-                                          : "bg-red-500"
-                                        }`}
-                                      style={{ width: `${penugasan.nilai}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            {penugasan.catatan_guru && (
+                            {task.tampilkan_nilai && gradeStatus === "selesai" && (
                               <div>
-                                <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
-                                  <MdComment /> Catatan:
-                                </p>
-                                <p className="text-sm text-gray-900 bg-white/70 rounded-lg p-3 border border-gray-200">
-                                  {penugasan.catatan_guru}
-                                </p>
+                                <label className="block text-[10px] font-medium text-zinc-600 mb-1">Nilai (0-100)</label>
+                                <input type="number" min="0" max="100" value={gradeNilai} onChange={(e) => setGradeNilai(e.target.value)} placeholder="0-100" className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-xs" />
                               </div>
                             )}
                           </div>
-                        )}
+                          <div>
+                            <label className="block text-[10px] font-medium text-zinc-600 mb-1">Catatan</label>
+                            <textarea value={gradeCatatan} onChange={(e) => setGradeCatatan(e.target.value)} placeholder="Opsional..." rows={2} className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-xs resize-none" />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button onClick={() => handleGradeSubmit(penugasan.id)} isLoading={isGrading} size="sm">
+                              <MdCheck className="w-3.5 h-3.5" /> Simpan
+                            </Button>
+                            <Button variant="secondary" size="sm" onClick={() => { setGradingPenugasanId(null); setGradeNilai(""); setGradeCatatan(""); setGradeStatus("selesai"); }} disabled={isGrading}>
+                              Batal
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Grade Button */}
+                      {!isPemberitahuan && penugasan.status === "dikirim" && gradingPenugasanId !== penugasan.id && (
+                        <div className="mt-2 pt-2 border-t border-zinc-200">
+                          <button onClick={() => setGradingPenugasanId(penugasan.id)} className="text-[10px] font-medium text-zinc-600 hover:text-zinc-900 transition-colors inline-flex items-center gap-1">
+                            <MdGrade className="w-3.5 h-3.5" /> Beri Nilai
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Display Grade Info */}
+                      {(penugasan.nilai !== undefined || penugasan.catatan_guru) && (
+                        <div className="mt-2 pt-2 border-t border-zinc-200">
+                          {penugasan.nilai !== undefined && (
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] text-zinc-500">Nilai:</span>
+                              <span className="text-xs font-bold text-zinc-900">{penugasan.nilai}/100</span>
+                              <div className="flex-1 bg-zinc-200 rounded-full h-1 overflow-hidden">
+                                <div className={`h-1 rounded-full ${penugasan.nilai >= 75 ? "bg-emerald-500" : penugasan.nilai >= 60 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${penugasan.nilai}%` }} />
+                              </div>
+                            </div>
+                          )}
+                          {penugasan.catatan_guru && (
+                            <div>
+                              <p className="text-[10px] text-zinc-500 mb-0.5 flex items-center gap-1"><MdComment className="w-3 h-3" /> Catatan:</p>
+                              <p className="text-[10px] text-zinc-700 bg-white rounded-lg p-1.5 border border-zinc-100">{penugasan.catatan_guru}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
               </div>
             </div>
           )}
         </div>
-      </main >
+      </main>
     </>
   );
 }

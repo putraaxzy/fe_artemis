@@ -213,11 +213,11 @@ export default function Explore() {
     <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
       <Header />
       
-      <main className="max-w-lg mx-auto px-4 pt-6 pb-20">
+      <main className="max-w-lg mx-auto px-4 pt-18 pb-20">
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 mb-6 transition-colors group"
+          className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 mb-6 mt-4 transition-colors group"
         >
           <MdArrowBack className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-medium">Kembali</span>
