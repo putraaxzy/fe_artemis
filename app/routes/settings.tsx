@@ -165,6 +165,16 @@ export default function Settings() {
   };
 
   const validateForm = () => {
+    if (formData.username && formData.username.length < 3) {
+      setError("Username minimal 3 karakter");
+      return false;
+    }
+
+    if (formData.username && formData.username.length > 30) {
+      setError("Username maksimal 30 karakter");
+      return false;
+    }
+
     if (formData.username && !/^[a-zA-Z0-9_.]+$/.test(formData.username)) {
       setError("Username hanya boleh huruf, angka, titik, dan underscore");
       return false;
@@ -453,9 +463,10 @@ export default function Settings() {
                   value={formData.username}
                   onChange={handleChange}
                   disabled={!isEditing || isLoading || !user.can_change_username}
+                  maxLength={30}
                   helperText={
                     user.can_change_username
-                      ? "Hanya boleh huruf, angka, titik, dan underscore"
+                      ? `3-30 karakter: huruf, angka, titik, underscore (${formData.username.length}/30)`
                       : `Bisa diubah dalam ${user.days_until_username_change} hari lagi`
                   }
                 />

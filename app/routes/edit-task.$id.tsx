@@ -31,7 +31,7 @@ export default function EditTask() {
     judul: "",
     deskripsi: "",
     target: "kelas" as "siswa" | "kelas",
-    tipe_pengumpulan: "link" as "link" | "langsung",
+    tipe_pengumpulan: "link" as "link" | "langsung" | "pemberitahuan",
     tanggal_mulai: "",
     tanggal_deadline: "",
     tampilkan_nilai: false,
@@ -791,6 +791,25 @@ export default function EditTask() {
                       </span>
                       <p className="text-xs text-gray-500">
                         Siswa mengumpulkan langsung ke Anda (offline)
+                      </p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tipe_pengumpulan"
+                      value="pemberitahuan"
+                      checked={formData.tipe_pengumpulan === "pemberitahuan"}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      className="w-4 h-4"
+                    />
+                    <div>
+                      <span className="text-gray-700 font-medium">
+                        Pemberitahuan
+                      </span>
+                      <p className="text-xs text-gray-500">
+                        Hanya pemberitahuan, tanpa pengumpulan
                       </p>
                     </div>
                   </label>

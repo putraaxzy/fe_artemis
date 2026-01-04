@@ -71,6 +71,16 @@ export default function Register() {
       return false;
     }
 
+    if (formData.username.length < 3) {
+      setError("Username minimal 3 karakter");
+      return false;
+    }
+
+    if (formData.username.length > 30) {
+      setError("Username maksimal 30 karakter");
+      return false;
+    }
+
     if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
       setError("Username hanya boleh berisi huruf, angka, dan garis bawah");
       return false;
@@ -178,7 +188,8 @@ export default function Register() {
               onChange={handleChange}
               required
               disabled={isLoading}
-              helperText="hanya huruf, angka, dan garis bawah"
+              maxLength={30}
+              helperText={`3-30 karakter: huruf, angka, garis bawah (${formData.username.length}/30)`}
             />
 
             <Input

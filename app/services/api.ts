@@ -289,7 +289,7 @@ export const taskService = {
     deskripsi?: string;
     target: "siswa" | "kelas";
     id_target: number[] | Array<{ kelas: string; jurusan: string }>;
-    tipe_pengumpulan: "link" | "langsung";
+    tipe_pengumpulan: "link" | "langsung" | "pemberitahuan";
     file_detail?: File;
     tanggal_mulai?: string;
     tanggal_deadline?: string;

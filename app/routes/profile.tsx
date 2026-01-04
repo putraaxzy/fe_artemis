@@ -393,6 +393,12 @@ export default function Profile() {
   };
 
   const handleSaveBio = async () => {
+    // Validate bio length
+    if (bioText.length > 200) {
+      alert("Bio maksimal 200 karakter");
+      return;
+    }
+    
     setBioSaving(true);
     try {
       const response = await profileService.updateBio(bioText);
