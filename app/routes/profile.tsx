@@ -28,83 +28,94 @@ export function meta() {
 
 // Performance Chart Component - Compact
 function PerformanceChart({ data }: { data: { task: string; score: number; date: string }[] }) {
-  if (!data || data.length === 0) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-gray-400">
         <MdTrendingUp className="w-8 h-8 text-gray-300 mb-2" />
-        <p className="text-xs text-gray-500">Belum ada data</p>
+        <p className="text-xs text-gray-500">Belum ada data performa</p>
       </div>
     );
   }
 
   const maxScore = 100;
-  const avgScore = data.reduce((a, b) => a + b.score, 0) / data.length;
-  const highestScore = Math.max(...data.map(d => d.score));
-  const lowestScore = Math.min(...data.map(d => d.score));
+  const validScores = data.filter(d => {
+    const score = Number(d.score);
+    return typeof score === 'number' && !isNaN(score) && score >= 0 && score <= 100;
+  });
+
+  if (validScores.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+        <MdTrendingUp className="w-8 h-8 text-gray-300 mb-2" />
+        <p className="text-xs text-gray-500">Data tidak valid</p>
+      </div>
+    );
+  }
+
+  const avgScore = validScores.reduce((a, b) => a + Number(b.score), 0) / validScores.length;
+  const scores = validScores.map(d => Number(d.score));
+  const highestScore = Math.max(...scores);
+  const lowestScore = Math.min(...scores);
   
   return (
     <div className="space-y-4">
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-gray-900 rounded-lg p-3 text-center">
-          <p className="text-[10px] text-gray-400 uppercase mb-0.5">Rata-rata</p>
-          <p className="text-xl font-bold text-white">{avgScore.toFixed(0)}</p>
+        <div className="bg-emerald-500 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-emerald-100 uppercase mb-0.5 font-semibold">Rata-rata</p>
+          <p className="text-lg sm:text-2xl font-bold text-white">{avgScore.toFixed(0)}</p>
         </div>
-        <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-[10px] text-gray-500 uppercase mb-0.5">Tertinggi</p>
-          <p className="text-xl font-bold text-green-600">{highestScore}</p>
+        <div className="bg-emerald-50 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-emerald-700 uppercase mb-0.5 font-semibold">Tertinggi</p>
+          <p className="text-lg sm:text-2xl font-bold text-emerald-700">{highestScore}</p>
         </div>
-        <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-[10px] text-gray-500 uppercase mb-0.5">Terendah</p>
-          <p className="text-xl font-bold text-gray-600">{lowestScore}</p>
+        <div className="bg-emerald-50 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-emerald-700 uppercase mb-0.5 font-semibold">Terendah</p>
+          <p className="text-lg sm:text-2xl font-bold text-emerald-700">{lowestScore}</p>
         </div>
       </div>
 
-      {/* Bar Chart */}
-      <div className="relative h-32 flex items-end gap-1.5 pt-4">
-        {data.map((item, index) => {
-          const height = (item.score / maxScore) * 100;
-          const getBarColor = () => {
-            if (item.score >= 75) return "bg-gray-900";
-            if (item.score >= 60) return "bg-gray-500";
-            return "bg-gray-300";
-          };
-          
-          return (
-            <div 
-              key={index} 
-              className="flex-1 flex flex-col items-center group relative"
-            >
-              <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                <div className="bg-gray-900 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap">
-                  <span className="font-medium">{item.score}</span>
+      {/* Bar Chart - Responsive */}
+      <div className="w-full bg-white rounded-lg p-4 border border-emerald-200">
+        <div className="flex items-end justify-between gap-1 sm:gap-1.5 h-48 sm:h-56">
+          {validScores.map((item, index) => {
+            const score = Number(item.score);
+            const heightPercent = (score / maxScore) * 100;
+            
+            return (
+              <div 
+                key={index} 
+                className="flex-1 flex flex-col items-center group relative h-full justify-end"
+              >
+                {/* Tooltip */}
+                <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                  <div className="bg-emerald-500 text-white text-xs rounded-md px-2 py-1 font-semibold shadow-lg">
+                    {score}
+                  </div>
+                  <div className="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                </div>
+                
+                {/* Bar - SOLID COLOR NO GRADIENT */}
+                <div 
+                  className="w-full bg-emerald-500 rounded-t-md transition-all hover:bg-emerald-600 cursor-pointer shadow-sm"
+                  style={{ 
+                    height: `${Math.max(heightPercent, 8)}%`,
+                    minHeight: '8px'
+                  }}
+                  title={`${item.task} - ${score} (${item.date})`}
+                />
+                
+                {/* Label */}
+                <div className="text-[9px] text-gray-500 mt-2 text-center truncate w-full px-1">
+                  {item.date}
                 </div>
               </div>
-              <div 
-                className={`w-full rounded-t ${getBarColor()} transition-all hover:opacity-80 cursor-pointer`}
-                style={{ height: `${Math.max(height, 4)}%` }}
-              />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-sm bg-gray-900" />
-          <span className="text-[10px] text-gray-500">75+</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-sm bg-gray-500" />
-          <span className="text-[10px] text-gray-500">60-74</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-sm bg-gray-300" />
-          <span className="text-[10px] text-gray-500">&lt;60</span>
-        </div>
-      </div>
-    </div>
+          </div>
   );
 }
 
