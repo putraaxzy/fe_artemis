@@ -47,7 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       if ("serviceWorker" in navigator) {
         // Register service worker manually for both DEV and PROD
         navigator.serviceWorker
-          .register("/service-worker.js")
+          .register("/sw.js")
           .then(() => {})
           .catch(() => {});
       }

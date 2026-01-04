@@ -19,7 +19,7 @@ export interface User {
 
 // tipe tugas
 export type TaskStatus = "pending" | "dikirim" | "selesai" | "ditolak";
-export type SubmissionType = "link" | "langsung" | "pemberitahuan";
+export type SubmissionType = "link" | "langsung";
 export type TaskTarget = "siswa" | "kelas";
 
 export interface Task {

@@ -3,11 +3,6 @@
  * Handle incoming push notifications dan background sync
  */
 
-import { precacheAndRoute } from 'workbox-precaching';
-
-// Precache and route all assets
-precacheAndRoute(self.__WB_MANIFEST || []);
-
 // Cache version
 const CACHE_VERSION = "v1";
 const CACHE_NAME = `notification-cache-${CACHE_VERSION}`;
