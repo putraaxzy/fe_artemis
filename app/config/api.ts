@@ -1,75 +1,75 @@
-/**
- * API Configuration
- * Centralized API URL configuration
- */
+  /**
+   * API Configuration
+   * Centralized API URL configuration
+   */
 
-/**
- * API base URL configuration
- */
-export const API_BASE_URL = "https://engine.ptraazxtt.my.id/api";
+  /**
+   * API base URL configuration
+   */
+  export const API_BASE_URL = "https://engine.ptraazxtt.my.id/api";
 
-/**
- * Storage URL for file attachments
- */
-export const STORAGE_URL = "https://engine.ptraazxtt.my.id/storage";
+  /**
+   * Storage URL for file attachments
+   */
+  export const STORAGE_URL = "https://engine.ptraazxtt.my.id/storage";
 
-/**
- * API Endpoints
- */
-export const API_ENDPOINTS = {
-  // Authentication
-  AUTH: {
-    REGISTER_OPTIONS: "/auth/register-options",
-    REGISTER: "/auth/register",
-    LOGIN: "/auth/login",
-    LOGOUT: "/auth/logout",
-    ME: "/auth/me",
-  },
+  /**
+   * API Endpoints
+   */
+  export const API_ENDPOINTS = {
+    // Authentication
+    AUTH: {
+      REGISTER_OPTIONS: "/auth/register-options",
+      REGISTER: "/auth/register",
+      LOGIN: "/auth/login",
+      LOGOUT: "/auth/logout",
+      ME: "/auth/me",
+    },
 
-  // Tasks
-  TASKS: {
-    LIST: "/tugas",
-    CREATE: "/tugas",
-    DETAIL: (id: number) => `/tugas/${id}/detail`,
-    SUBMIT: (id: number) => `/tugas/${id}/submit`,
-    PENDING: (id: number) => `/tugas/${id}/pending`,
-    REMINDER: (id: number) => `/tugas/${id}/reminder`,
-  },
+    // Tasks
+    TASKS: {
+      LIST: "/tugas",
+      CREATE: "/tugas",
+      DETAIL: (id: number) => `/tugas/${id}/detail`,
+      SUBMIT: (id: number) => `/tugas/${id}/submit`,
+      PENDING: (id: number) => `/tugas/${id}/pending`,
+      REMINDER: (id: number) => `/tugas/${id}/reminder`,
+    },
 
-  // Assignments
-  ASSIGNMENTS: {
-    UPDATE_STATUS: (id: number) => `/tugas/penugasan/${id}/status`,
-  },
+    // Assignments
+    ASSIGNMENTS: {
+      UPDATE_STATUS: (id: number) => `/tugas/penugasan/${id}/status`,
+    },
 
-  // Bot
-  BOT: {
-    REMINDER: "/bot/reminder",
-    REMINDER_HISTORY: (taskId: number) => `/bot/reminder/${taskId}`,
-  },
+    // Bot
+    BOT: {
+      REMINDER: "/bot/reminder",
+      REMINDER_HISTORY: (taskId: number) => `/bot/reminder/${taskId}`,
+    },
 
-  // Notifications
-  NOTIFICATIONS: {
-    SUBSCRIBE: "/notifications/subscribe",
-    UNSUBSCRIBE: "/notifications/unsubscribe",
-    GET_VAPID_KEY: "/notifications/vapid-key",
-    SUBSCRIPTIONS_COUNT: "/notifications/subscriptions-count",
-    TEST: "/notifications/test",
-  },
-} as const;
+    // Notifications
+    NOTIFICATIONS: {
+      SUBSCRIBE: "/notifications/subscribe",
+      UNSUBSCRIBE: "/notifications/unsubscribe",
+      GET_VAPID_KEY: "/notifications/vapid-key",
+      SUBSCRIPTIONS_COUNT: "/notifications/subscriptions-count",
+      TEST: "/notifications/test",
+    },
+  } as const;
 
-/**
- * Build full API URL
- */
-export function buildApiUrl(endpoint: string): string {
-  return `${API_BASE_URL}${endpoint}`;
-}
+  /**
+   * Build full API URL
+   */
+  export function buildApiUrl(endpoint: string): string {
+    return `${API_BASE_URL}${endpoint}`;
+  }
 
-/**
- * API Configuration
- */
-export const API_CONFIG = {
-  BASE_URL: API_BASE_URL,
-  TIMEOUT: 30000, // 30 seconds
-  RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000, // 1 second
-} as const;
+  /**
+   * API Configuration
+   */
+  export const API_CONFIG = {
+    BASE_URL: API_BASE_URL,
+    TIMEOUT: 30000, // 30 seconds
+    RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 1000, // 1 second
+  } as const;
