@@ -9,7 +9,8 @@ import {
   MdArrowForward,
   MdSchool,
   MdPersonOutline,
-  MdTrendingUp
+  MdTrendingUp,
+  MdArrowBack,
 } from "react-icons/md";
 
 // TypeWriter Effect Component
@@ -213,6 +214,15 @@ export default function Explore() {
       <Header />
       
       <main className="max-w-lg mx-auto px-4 pt-6 pb-20">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 mb-6 transition-colors group"
+        >
+          <MdArrowBack className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Kembali</span>
+        </button>
+
         {/* Header with Typing Effect */}
         <div className="mb-8">
           <h1 className="text-3xl font-black text-zinc-900">
