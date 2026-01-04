@@ -14,3 +14,10 @@ export { Badge, StatusBadge } from "./Badge";
 export { Pagination } from "./Pagination";
 export { InstallPrompt } from "./InstallPrompt";
 export { NotificationBell } from "./NotificationBell";
+export {
+  LazySection,
+  LazyList,
+  LazyImage,
+  DeferredContent,
+  SkeletonPlaceholder,
+} from "./LazyComponents";

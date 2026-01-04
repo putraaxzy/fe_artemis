@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router";
 import { taskService, type Task } from "../services";
-import { useAuth } from "../hooks";
+import { useAuth, useChunkedRender } from "../hooks";
 import { useRealtimeNotifications } from "../hooks/useRealtimeNotifications";
-import { Header, Alert, Button } from "../components";
+import { Header, Alert, Button, LazySection, SkeletonPlaceholder } from "../components";
 import {
   MdTask,
   MdLink,
@@ -167,8 +167,8 @@ function UrgencyBadge({ deadline, status }: { deadline?: string; status?: string
   );
 }
 
-// Task Card - Compact & Clean
-function TaskCard({ 
+// Task Card - Compact & Clean (Memoized)
+const TaskCard = memo(function TaskCard({ 
   task, 
   isGuru, 
   onClick, 
@@ -306,7 +306,7 @@ function TaskCard({
       )}
     </div>
   );
-}
+});
 
 // Task Section
 function TaskSection({ 

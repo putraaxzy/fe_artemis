@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 import { taskService, type TaskDetail, type Penugasan } from "../services/api";
 import { STORAGE_URL } from "../config/api";
 import { useAuth } from "../hooks/useAuth";
+import { useChunkedRender } from "../hooks/useLazyRender";
 import { Header } from "../components/Header";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
+import { LazySection, LazyImage, SkeletonPlaceholder } from "../components/LazyComponents";
 import {
   MdLink,
   MdFilePresent,
@@ -67,7 +69,7 @@ function formatRelativeDeadline(dateStr: string): { text: string; urgent: boolea
 }
 
 // Progress Ring Component
-function ProgressRing({ progress, size = 48, strokeWidth = 4 }: { progress: number; size?: number; strokeWidth?: number }) {
+const ProgressRing = memo(function ProgressRing({ progress, size = 48, strokeWidth = 4 }: { progress: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (progress / 100) * circumference;
@@ -81,10 +83,10 @@ function ProgressRing({ progress, size = 48, strokeWidth = 4 }: { progress: numb
       <span className="absolute text-xs font-bold text-zinc-900">{Math.round(progress)}%</span>
     </div>
   );
-}
+});
 
 // Status Badge Component
-function StatusBadge({ status, isPemberitahuan }: { status: string; isPemberitahuan?: boolean }) {
+const StatusBadge = memo(function StatusBadge({ status, isPemberitahuan }: { status: string; isPemberitahuan?: boolean }) {
   if (isPemberitahuan) {
     return status === "selesai" ? (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-900 text-white text-xs font-medium">
@@ -110,10 +112,10 @@ function StatusBadge({ status, isPemberitahuan }: { status: string; isPemberitah
       {config.icon} {config.label}
     </span>
   );
-}
+});
 
 // Stat Card Component
-function StatCard({ label, value, color = "zinc" }: { label: string; value: number; color?: "zinc" | "amber" | "emerald" | "red" }) {
+const StatCard = memo(function StatCard({ label, value, color = "zinc" }: { label: string; value: number; color?: "zinc" | "amber" | "emerald" | "red" }) {
   const colors = {
     zinc: "bg-zinc-50 border-zinc-200 text-zinc-900",
     amber: "bg-amber-50 border-amber-200 text-amber-900",
@@ -127,7 +129,152 @@ function StatCard({ label, value, color = "zinc" }: { label: string; value: numb
       <p className="text-xl sm:text-2xl font-bold">{value}</p>
     </div>
   );
+});
+
+// Memoized Penugasan Card for list rendering
+interface PenugasanCardProps {
+  penugasan: Penugasan;
+  isPemberitahuan: boolean;
+  tampilkanNilai: boolean;
+  gradingPenugasanId: number | null;
+  gradeStatus: "selesai" | "ditolak";
+  gradeNilai: string;
+  gradeCatatan: string;
+  isGrading: boolean;
+  onGradeStatusChange: (status: "selesai" | "ditolak") => void;
+  onGradeNilaiChange: (nilai: string) => void;
+  onGradeCatatanChange: (catatan: string) => void;
+  onStartGrading: (id: number) => void;
+  onCancelGrading: () => void;
+  onSubmitGrade: (id: number) => void;
 }
+
+const PenugasanCard = memo(function PenugasanCard({
+  penugasan,
+  isPemberitahuan,
+  tampilkanNilai,
+  gradingPenugasanId,
+  gradeStatus,
+  gradeNilai,
+  gradeCatatan,
+  isGrading,
+  onGradeStatusChange,
+  onGradeNilaiChange,
+  onGradeCatatanChange,
+  onStartGrading,
+  onCancelGrading,
+  onSubmitGrade,
+}: PenugasanCardProps) {
+  return (
+    <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-medium text-zinc-900 truncate">{penugasan.siswa.name}</h3>
+          <p className="text-[10px] text-zinc-500 flex items-center gap-1">
+            <FaUserGraduate className="w-2.5 h-2.5" />
+            {penugasan.siswa.kelas} - {penugasan.siswa.jurusan}
+          </p>
+          {penugasan.tanggal_pengumpulan && (
+            <p className="text-[10px] text-zinc-400 mt-0.5">
+              {new Date(penugasan.tanggal_pengumpulan).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <StatusBadge status={penugasan.status} isPemberitahuan={isPemberitahuan} />
+          {penugasan.link_drive && (
+            <a href={penugasan.link_drive} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-zinc-900 text-white text-[10px] font-medium rounded-lg hover:bg-zinc-800 transition-colors inline-flex items-center gap-1">
+              <MdOpenInNew className="w-3 h-3" /> Lihat
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Grading Form */}
+      {!isPemberitahuan && penugasan.status === "dikirim" && gradingPenugasanId === penugasan.id && (
+        <div className="mt-3 pt-3 border-t border-zinc-200 space-y-3">
+          <h4 className="text-sm font-medium text-zinc-900 flex items-center gap-1.5"><MdGrade className="w-4 h-4" /> Penilaian</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 mb-1.5">Status</label>
+              <select 
+                value={gradeStatus} 
+                onChange={(e) => onGradeStatusChange(e.target.value as "selesai" | "ditolak")} 
+                className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent bg-white text-sm font-medium appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em' }}
+              >
+                <option value="selesai">✓ Diterima</option>
+                <option value="ditolak">✗ Ditolak</option>
+              </select>
+            </div>
+            {tampilkanNilai && gradeStatus === "selesai" && (
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">Nilai (0-100)</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="100" 
+                  value={gradeNilai} 
+                  onChange={(e) => onGradeNilaiChange(e.target.value)} 
+                  placeholder="Masukkan nilai..." 
+                  className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm font-medium" 
+                />
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Catatan (Opsional)</label>
+            <textarea 
+              value={gradeCatatan} 
+              onChange={(e) => onGradeCatatanChange(e.target.value)} 
+              placeholder="Tulis catatan untuk siswa..." 
+              rows={3} 
+              className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-sm resize-none" 
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+            <Button onClick={() => onSubmitGrade(penugasan.id)} isLoading={isGrading} className="w-full sm:w-auto">
+              <MdCheck className="w-4 h-4" /> Simpan Nilai
+            </Button>
+            <Button variant="secondary" onClick={onCancelGrading} disabled={isGrading} className="w-full sm:w-auto">
+              Batal
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Grade Button */}
+      {!isPemberitahuan && penugasan.status === "dikirim" && gradingPenugasanId !== penugasan.id && (
+        <div className="mt-2 pt-2 border-t border-zinc-200">
+          <button onClick={() => onStartGrading(penugasan.id)} className="text-[10px] font-medium text-zinc-600 hover:text-zinc-900 transition-colors inline-flex items-center gap-1">
+            <MdGrade className="w-3.5 h-3.5" /> Beri Nilai
+          </button>
+        </div>
+      )}
+
+      {/* Display Grade Info */}
+      {(penugasan.nilai !== undefined || penugasan.catatan_guru) && (
+        <div className="mt-2 pt-2 border-t border-zinc-200">
+          {penugasan.nilai !== undefined && (
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] text-zinc-500">Nilai:</span>
+              <span className="text-xs font-bold text-zinc-900">{penugasan.nilai}/100</span>
+              <div className="flex-1 bg-zinc-200 rounded-full h-1 overflow-hidden">
+                <div className={`h-1 rounded-full ${penugasan.nilai >= 75 ? "bg-emerald-500" : penugasan.nilai >= 60 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${penugasan.nilai}%` }} />
+              </div>
+            </div>
+          )}
+          {penugasan.catatan_guru && (
+            <div>
+              <p className="text-[10px] text-zinc-500 mb-0.5 flex items-center gap-1"><MdComment className="w-3 h-3" /> Catatan:</p>
+              <p className="text-[10px] text-zinc-700 bg-white rounded-lg p-1.5 border border-zinc-100">{penugasan.catatan_guru}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
 
 export default function TaskDetailPage() {
   const { id } = useParams();
@@ -151,7 +298,19 @@ export default function TaskDetailPage() {
   const [gradeStatus, setGradeStatus] = useState<"selesai" | "ditolak">("selesai");
   const [isGrading, setIsGrading] = useState(false);
 
-  const fetchTaskDetail = async () => {
+  // Memoized callbacks for PenugasanCard
+  const handleStartGrading = useCallback((id: number) => setGradingPenugasanId(id), []);
+  const handleCancelGrading = useCallback(() => {
+    setGradingPenugasanId(null);
+    setGradeNilai("");
+    setGradeCatatan("");
+    setGradeStatus("selesai");
+  }, []);
+  const handleGradeStatusChange = useCallback((status: "selesai" | "ditolak") => setGradeStatus(status), []);
+  const handleGradeNilaiChange = useCallback((nilai: string) => setGradeNilai(nilai), []);
+  const handleGradeCatatanChange = useCallback((catatan: string) => setGradeCatatan(catatan), []);
+
+  const fetchTaskDetail = useCallback(async () => {
     if (!id) {
       setError("Task ID tidak ditemukan");
       return;
@@ -170,7 +329,23 @@ export default function TaskDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  // Filter and chunk penugasan for lazy rendering
+  const filteredPenugasan = useMemo(() => {
+    if (!task?.penugasan) return [];
+    return task.penugasan.filter(p => {
+      if (!p?.siswa) return false;
+      const name = p.siswa.name?.toLowerCase() || "";
+      const kelas = p.siswa.kelas?.toLowerCase() || "";
+      const jurusan = p.siswa.jurusan?.toLowerCase() || "";
+      const query = searchQuery.toLowerCase();
+      return name.includes(query) || kelas.includes(query) || jurusan.includes(query);
+    });
+  }, [task?.penugasan, searchQuery]);
+
+  // Chunked render - render 10 items at a time
+  const renderedPenugasan = useChunkedRender(filteredPenugasan, 10);
 
   useEffect(() => {
     if (authLoading) return;
@@ -662,117 +837,57 @@ export default function TaskDetailPage() {
 
           {/* Guru: Submissions List */}
           {isGuru && task.penugasan && task.penugasan.length > 0 && (
-            <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
-                  <MdPeople className="w-4 h-4" /> {isPemberitahuan ? "Daftar Pembaca" : "Pengumpulan Siswa"}
-                </h2>
-                <span className="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded-md">
-                  {task.penugasan.filter(p => p.siswa.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.siswa.kelas?.toLowerCase().includes(searchQuery.toLowerCase())).length} siswa
-                </span>
-              </div>
+            <LazySection 
+              rootMargin="100px" 
+              minHeight="200px"
+              fallback={<SkeletonPlaceholder type="list" count={3} />}
+            >
+              <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
+                    <MdPeople className="w-4 h-4" /> {isPemberitahuan ? "Daftar Pembaca" : "Pengumpulan Siswa"}
+                  </h2>
+                  <span className="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded-md">
+                    {filteredPenugasan.length} siswa
+                  </span>
+                </div>
 
-              {/* Search */}
-              <div className="mb-4">
-                <Input type="text" placeholder="Cari nama atau kelas..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-              </div>
+                {/* Search */}
+                <div className="mb-4">
+                  <Input type="text" placeholder="Cari nama atau kelas..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                </div>
 
-              {/* List */}
-              <div className="space-y-2">
-                {task.penugasan
-                  .filter(p => p.siswa.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.siswa.kelas?.toLowerCase().includes(searchQuery.toLowerCase()) || p.siswa.jurusan?.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map((penugasan) => (
-                    <div key={penugasan.id} className="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-zinc-900 truncate">{penugasan.siswa.name}</h3>
-                          <p className="text-[10px] text-zinc-500 flex items-center gap-1">
-                            <FaUserGraduate className="w-2.5 h-2.5" />
-                            {penugasan.siswa.kelas} - {penugasan.siswa.jurusan}
-                          </p>
-                          {penugasan.tanggal_pengumpulan && (
-                            <p className="text-[10px] text-zinc-400 mt-0.5">
-                              {new Date(penugasan.tanggal_pengumpulan).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <StatusBadge status={penugasan.status} isPemberitahuan={isPemberitahuan} />
-                          {penugasan.link_drive && (
-                            <a href={penugasan.link_drive} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-zinc-900 text-white text-[10px] font-medium rounded-lg hover:bg-zinc-800 transition-colors inline-flex items-center gap-1">
-                              <MdOpenInNew className="w-3 h-3" /> Lihat
-                            </a>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Grading Form */}
-                      {!isPemberitahuan && penugasan.status === "dikirim" && gradingPenugasanId === penugasan.id && (
-                        <div className="mt-3 pt-3 border-t border-zinc-200 space-y-3">
-                          <h4 className="text-xs font-medium text-zinc-900 flex items-center gap-1"><MdGrade className="w-3.5 h-3.5" /> Penilaian</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div>
-                              <label className="block text-[10px] font-medium text-zinc-600 mb-1">Status</label>
-                              <select value={gradeStatus} onChange={(e) => setGradeStatus(e.target.value as "selesai" | "ditolak")} className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent bg-white text-xs">
-                                <option value="selesai">Diterima</option>
-                                <option value="ditolak">Ditolak</option>
-                              </select>
-                            </div>
-                            {task.tampilkan_nilai && gradeStatus === "selesai" && (
-                              <div>
-                                <label className="block text-[10px] font-medium text-zinc-600 mb-1">Nilai (0-100)</label>
-                                <input type="number" min="0" max="100" value={gradeNilai} onChange={(e) => setGradeNilai(e.target.value)} placeholder="0-100" className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-xs" />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-medium text-zinc-600 mb-1">Catatan</label>
-                            <textarea value={gradeCatatan} onChange={(e) => setGradeCatatan(e.target.value)} placeholder="Opsional..." rows={2} className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-zinc-900 focus:border-transparent text-xs resize-none" />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button onClick={() => handleGradeSubmit(penugasan.id)} isLoading={isGrading} size="sm">
-                              <MdCheck className="w-3.5 h-3.5" /> Simpan
-                            </Button>
-                            <Button variant="secondary" size="sm" onClick={() => { setGradingPenugasanId(null); setGradeNilai(""); setGradeCatatan(""); setGradeStatus("selesai"); }} disabled={isGrading}>
-                              Batal
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Grade Button */}
-                      {!isPemberitahuan && penugasan.status === "dikirim" && gradingPenugasanId !== penugasan.id && (
-                        <div className="mt-2 pt-2 border-t border-zinc-200">
-                          <button onClick={() => setGradingPenugasanId(penugasan.id)} className="text-[10px] font-medium text-zinc-600 hover:text-zinc-900 transition-colors inline-flex items-center gap-1">
-                            <MdGrade className="w-3.5 h-3.5" /> Beri Nilai
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Display Grade Info */}
-                      {(penugasan.nilai !== undefined || penugasan.catatan_guru) && (
-                        <div className="mt-2 pt-2 border-t border-zinc-200">
-                          {penugasan.nilai !== undefined && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] text-zinc-500">Nilai:</span>
-                              <span className="text-xs font-bold text-zinc-900">{penugasan.nilai}/100</span>
-                              <div className="flex-1 bg-zinc-200 rounded-full h-1 overflow-hidden">
-                                <div className={`h-1 rounded-full ${penugasan.nilai >= 75 ? "bg-emerald-500" : penugasan.nilai >= 60 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${penugasan.nilai}%` }} />
-                              </div>
-                            </div>
-                          )}
-                          {penugasan.catatan_guru && (
-                            <div>
-                              <p className="text-[10px] text-zinc-500 mb-0.5 flex items-center gap-1"><MdComment className="w-3 h-3" /> Catatan:</p>
-                              <p className="text-[10px] text-zinc-700 bg-white rounded-lg p-1.5 border border-zinc-100">{penugasan.catatan_guru}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                {/* List with chunked rendering */}
+                <div className="space-y-2">
+                  {renderedPenugasan.map((penugasan) => (
+                    <PenugasanCard
+                      key={penugasan.id}
+                      penugasan={penugasan}
+                      isPemberitahuan={isPemberitahuan}
+                      tampilkanNilai={task.tampilkan_nilai}
+                      gradingPenugasanId={gradingPenugasanId}
+                      gradeStatus={gradeStatus}
+                      gradeNilai={gradeNilai}
+                      gradeCatatan={gradeCatatan}
+                      isGrading={isGrading}
+                      onGradeStatusChange={handleGradeStatusChange}
+                      onGradeNilaiChange={handleGradeNilaiChange}
+                      onGradeCatatanChange={handleGradeCatatanChange}
+                      onStartGrading={handleStartGrading}
+                      onCancelGrading={handleCancelGrading}
+                      onSubmitGrade={handleGradeSubmit}
+                    />
                   ))}
+                  
+                  {/* Loading indicator for chunked render */}
+                  {renderedPenugasan.length < filteredPenugasan.length && (
+                    <div className="py-3 flex justify-center">
+                      <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-600 rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </LazySection>
           )}
         </div>
       </main>
