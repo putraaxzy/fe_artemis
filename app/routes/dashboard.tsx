@@ -126,8 +126,8 @@ function ProgressRing({
 function UrgencyBadge({ deadline, status }: { deadline?: string; status?: string }) {
   if (status === "selesai") {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 text-xs font-medium">
-        <MdCheckCircle className="w-3 h-3" /> Selesai
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 text-xs font-medium flex-shrink-0">
+        <MdCheckCircle className="w-3 h-3" /> <span className="hidden sm:inline">Selesai</span>
       </span>
     );
   }
@@ -138,31 +138,31 @@ function UrgencyBadge({ deadline, status }: { deadline?: string; status?: string
   
   if (days < 0) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-xs font-medium animate-pulse">
-        <MdWarning className="w-3 h-3" /> Terlambat
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-xs font-medium animate-pulse flex-shrink-0">
+        <MdWarning className="w-3 h-3" /> <span className="hidden sm:inline">Terlambat</span>
       </span>
     );
   }
   
   if (days === 0) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-xs font-medium">
-        <MdLocalFireDepartment className="w-3 h-3" /> Hari ini
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-xs font-medium flex-shrink-0">
+        <MdLocalFireDepartment className="w-3 h-3" /> <span className="hidden sm:inline">Hari ini</span>
       </span>
     );
   }
   
   if (days <= 2) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-xs font-medium">
-        <MdSchedule className="w-3 h-3" /> {days} hari lagi
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-xs font-medium flex-shrink-0">
+        <MdSchedule className="w-3 h-3" /> <span className="hidden sm:inline">{days} hari</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 text-xs font-medium">
-      <MdSchedule className="w-3 h-3" /> {formatRelativeDate(deadline)}
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 text-xs font-medium flex-shrink-0">
+      <MdSchedule className="w-3 h-3" /> <span className="hidden sm:inline">{formatRelativeDate(deadline)}</span>
     </span>
   );
 }
@@ -235,48 +235,80 @@ const TaskCard = memo(function TaskCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
             <h3 className="font-semibold text-zinc-900 text-sm line-clamp-1 group-hover:text-zinc-700">
               {task.judul}
             </h3>
             <UrgencyBadge deadline={task.tanggal_deadline} status={task.status} />
           </div>
 
-          <div className="mt-1.5 flex items-center gap-3 text-xs text-zinc-500">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-zinc-500">
             {isGuru ? (
               <>
                 <span className="flex items-center gap-1">
                   <MdPeople className="w-3.5 h-3.5" />
-                  {task.total_siswa || 0} siswa
+                  <span className="hidden sm:inline">{task.total_siswa || 0} siswa</span>
+                  <span className="sm:hidden">{task.total_siswa || 0}</span>
                 </span>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span>{task.selesai || 0} selesai</span>
                 {(task.dikirim || 0) > 0 && (
                   <>
-                    <span>•</span>
+                    <span className="hidden sm:inline">•</span>
                     <span className="text-blue-600">{task.dikirim} menunggu</span>
                   </>
                 )}
               </>
             ) : (
               <>
-                <span>{typeof task.guru === 'object' ? task.guru?.name : task.guru}</span>
-                <span>•</span>
+                <span className="truncate">{typeof task.guru === 'object' ? task.guru?.name : task.guru}</span>
+                <span className="hidden sm:inline">•</span>
                 <span className="capitalize">
                   {task.tipe_pengumpulan === "pemberitahuan" ? "Info" :
-                   task.tipe_pengumpulan === "link" ? "Online" : "Langsung"}
+                   task.tipe_pengumpulan === "link" ? "Online" : "File"}
                 </span>
               </>
             )}
           </div>
         </div>
 
-        <MdKeyboardArrowRight className="w-5 h-5 text-zinc-300 group-hover:text-zinc-500 flex-shrink-0 transition-colors" />
+        <MdKeyboardArrowRight className="w-5 h-5 text-zinc-300 group-hover:text-zinc-500 flex-shrink-0 transition-colors hidden sm:block" />
       </div>
 
-      {/* Guru Actions - Show on hover */}
+      {/* Guru Actions - Show on hover (desktop) and always (mobile) */}
       {isGuru && (onEdit || onDelete || onExport) && (
-        <div className="absolute right-2 top-2 hidden group-hover:flex gap-1 bg-white rounded-lg shadow-sm border border-zinc-200 p-0.5">
+        <div className="absolute right-2 top-2 flex md:hidden gap-1 bg-white rounded-lg shadow-sm border border-zinc-200 p-0.5">
+          {onExport && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onExport(); }}
+              className="p-1.5 hover:bg-emerald-50 rounded-md transition-colors"
+              title="Export Excel"
+            >
+              <MdFileDownload className="w-4 h-4 text-emerald-600" />
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors"
+            >
+              <MdEdit className="w-4 h-4 text-zinc-600" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="p-1.5 hover:bg-red-50 rounded-md transition-colors"
+            >
+              <MdDelete className="w-4 h-4 text-red-500" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Guru Actions - Show on hover (desktop only) */}
+      {isGuru && (onEdit || onDelete || onExport) && (
+        <div className="hidden md:flex absolute right-2 top-2 group-hover:flex gap-1 bg-white rounded-lg shadow-sm border border-zinc-200 p-0.5">
           {onExport && (
             <button
               onClick={(e) => { e.stopPropagation(); onExport(); }}
@@ -435,14 +467,15 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 ${
+      className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all active:scale-95 whitespace-nowrap ${
         highlight 
           ? "bg-zinc-900 text-white hover:bg-zinc-800" 
           : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
       }`}
     >
       {icon}
-      {label}
+      <span className="hidden sm:inline">{label}</span>
+      <span className="sm:hidden">{label.split(' ')[0]}</span>
     </button>
   );
 }
